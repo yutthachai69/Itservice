@@ -1,0 +1,246 @@
+// IT Service Ticket System — schema (SQL Server)
+// Prisma 6. Note: SQL Server has no native enum/json in Prisma → strings + JSON text.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Site {
+  code        String       @id @db.NVarChar(2) // "01".."06"
+  name        String       @db.NVarChar(50)
+  users       User[]
+  departments Department[]
+  tickets     Ticket[]     @relation("ticketSite")
+  serviceFor  Ticket[]     @relation("ticketServiceSite")
+}
+
+model Department {
+  id       Int    @id @default(autoincrement())
+  siteCode String @db.NVarChar(2)
+  site     Site   @relation(fields: [siteCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  name     String @db.NVarChar(150)
+  users    User[]
+
+  @@unique([siteCode, name])
+}
+
+model User {
+  id           Int         @id @default(autoincrement())
+  username     String      @unique @db.NVarChar(100) // AD sAMAccountName
+  displayName  String      @db.NVarChar(150)
+  email        String?     @db.NVarChar(150)
+  position     String?     @db.NVarChar(150)
+  phone        String?     @db.NVarChar(50)
+  siteCode     String?     @db.NVarChar(2)
+  site         Site?       @relation(fields: [siteCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  departmentId Int?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  role         String      @default("USER") @db.NVarChar(20) // USER | IT_STAFF | IT_LEAD | ADMIN
+  // when true, login sync will NOT recompute role from the directory department
+  // (set by admins who promote to IT_LEAD/ADMIN or add a non-IT helper)
+  roleLocked   Boolean     @default(false)
+  active       Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+
+  requestedTickets Ticket[]      @relation("requester")
+  assignedTickets  Ticket[]      @relation("assignee")
+  closedTickets    Ticket[]      @relation("closer")
+  checkedTickets   Ticket[]      @relation("checker")
+  events           TicketEvent[]
+  evaluations      Evaluation[]
+  createdAssets    Asset[]       @relation("assetCreator")
+}
+
+model Approver {
+  id        Int              @id @default(autoincrement())
+  name      String           @db.NVarChar(150)
+  email     String?          @db.NVarChar(150)
+  type      String           @db.NVarChar(20) // IT | ACCOUNTING
+  active    Boolean          @default(true)
+  approvals TicketApproval[]
+}
+
+model Ticket {
+  id       Int    @id @default(autoincrement())
+  docNo    String @unique @db.NVarChar(20)
+  formType String @db.NVarChar(10) // F06 F07 F10 F11 F12
+  siteCode String @db.NVarChar(2)
+  site     Site   @relation("ticketSite", fields: [siteCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
+
+  requesterId     Int
+  requester       User    @relation("requester", fields: [requesterId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reqName         String  @db.NVarChar(150)
+  reqDept         String? @db.NVarChar(150)
+  reqPosition     String? @db.NVarChar(150)
+  reqPhone        String? @db.NVarChar(50)
+  reqEmail        String? @db.NVarChar(150)
+  serviceSiteCode String  @db.NVarChar(2)
+  serviceSite     Site    @relation("ticketServiceSite", fields: [serviceSiteCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
+
+  status     String @default("OPEN") @db.NVarChar(20) // OPEN IN_PROGRESS RESOLVED CLOSED CANCELLED
+  itStatus   String @default("NEW") @db.NVarChar(20) // NEW RECEIVED IN_PROGRESS CLOSED
+  userStatus String @db.NVarChar(100)
+
+  assignedToId Int?
+  assignedTo   User? @relation("assignee", fields: [assignedToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  closedById   Int?
+  closedBy     User? @relation("closer", fields: [closedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  checkedById  Int?
+  checkedBy    User? @relation("checker", fields: [checkedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  notifyEmail Boolean @default(false)
+  note        String? @db.NVarChar(Max)
+  formData    String  @db.NVarChar(Max) // per-form JSON
+
+  slaHours Int       @default(24)
+  slaDueAt DateTime?
+
+  createdAt  DateTime  @default(now())
+  receivedAt DateTime?
+  resolvedAt DateTime?
+  closedAt   DateTime?
+
+  attachments TicketAttachment[]
+  events      TicketEvent[]
+  approvals   TicketApproval[]
+  evaluation  Evaluation?
+  loans       Loan[]            @relation("ticketLoans")
+
+  @@index([formType, status])
+  @@index([siteCode])
+  @@index([createdAt])
+}
+
+model TicketAttachment {
+  id         Int      @id @default(autoincrement())
+  ticketId   Int
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  filename   String   @db.NVarChar(260)
+  storedName String   @db.NVarChar(260)
+  size       Int
+  mimeType   String?  @db.NVarChar(120)
+  uploadedAt DateTime @default(now())
+}
+
+model TicketEvent {
+  id         Int      @id @default(autoincrement())
+  ticketId   Int
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  actorId    Int?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  action     String   @db.NVarChar(40) // CREATE RECEIVE ASSIGN PROGRESS RESOLVE CLOSE CANCEL COMMENT APPROVE REJECT REOPEN
+  fromStatus String?  @db.NVarChar(20)
+  toStatus   String?  @db.NVarChar(20)
+  comment    String?  @db.NVarChar(Max)
+  createdAt  DateTime @default(now())
+
+  @@index([ticketId])
+}
+
+model TicketApproval {
+  id         Int       @id @default(autoincrement())
+  ticketId   Int
+  ticket     Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  step       String    @db.NVarChar(20) // CHECK ACCOUNTING APPROVE
+  seq        Int
+  approverId Int?
+  approver   Approver? @relation(fields: [approverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status     String    @default("PENDING") @db.NVarChar(20) // PENDING APPROVED REJECTED
+  comment    String?   @db.NVarChar(Max)
+  actedAt    DateTime?
+
+  @@index([ticketId])
+}
+
+model Evaluation {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int      @unique
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  raterId   Int?
+  rater     User?    @relation(fields: [raterId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  score     Int // 1..5
+  comment   String?  @db.NVarChar(Max)
+  createdAt DateTime @default(now())
+}
+
+model DocCounter {
+  period String @id @db.NVarChar(4) // "YYMM" (Buddhist year, 2 digits)
+  seq    Int    @default(0)
+}
+
+// Public holidays — excluded from business-hours SLA math.
+model Holiday {
+  dateKey String @id @db.NVarChar(10) // "YYYY-MM-DD"
+  name    String @db.NVarChar(150)
+}
+
+// Loanable equipment pool (notebooks, conference speakerphones, projectors …).
+// Each row = one physical unit. Availability is derived from overlapping Loans.
+model LoanItem {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.NVarChar(120)
+  category  String   @db.NVarChar(30) // notebook | speakerphone | projector | monitor | adapter | other
+  serial    String?  @db.NVarChar(60)
+  assetNo   String?  @db.NVarChar(30) // optional link to an F01 Asset
+  siteCode  String   @db.NVarChar(2)
+  status    String   @default("AVAILABLE") @db.NVarChar(20) // AVAILABLE | MAINTENANCE | RETIRED
+  note      String?  @db.NVarChar(Max)
+  createdAt DateTime @default(now())
+  loans     Loan[]
+
+  @@index([category])
+  @@index([siteCode])
+}
+
+model Loan {
+  id           Int       @id @default(autoincrement())
+  itemId       Int
+  item         LoanItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  ticketId     Int?
+  ticket       Ticket?   @relation("ticketLoans", fields: [ticketId], references: [id], onDelete: SetNull)
+  borrowerName String    @db.NVarChar(150)
+  borrowDate   DateTime
+  dueDate      DateTime
+  returnedAt   DateTime?
+  status       String    @default("ONLOAN") @db.NVarChar(20) // BOOKED | ONLOAN | RETURNED | CANCELLED
+  note         String?   @db.NVarChar(Max)
+  createdById  Int?
+  createdAt    DateTime  @default(now())
+
+  @@index([itemId])
+  @@index([ticketId])
+  @@index([status])
+}
+
+// F01 — computer asset registry. Searchable fields are columns; the rest of the
+// ~50 spec fields live in `data` (JSON text), shaped by src/lib/asset-def.ts.
+model Asset {
+  id           Int      @id @default(autoincrement())
+  assetNo      String   @unique @db.NVarChar(30)
+  siteCode     String   @db.NVarChar(2)
+  assetType    String?  @db.NVarChar(40) // PC / Notebook / Server / ...
+  userName     String?  @db.NVarChar(120)
+  userDomain   String?  @db.NVarChar(80)
+  department   String?  @db.NVarChar(120)
+  brand        String?  @db.NVarChar(40)
+  model        String?  @db.NVarChar(60)
+  serialNumber String?  @db.NVarChar(60)
+  ipAddress    String?  @db.NVarChar(20)
+  status       String   @default("ใช้งาน") @db.NVarChar(30)
+  note         String?  @db.NVarChar(Max)
+  data         String   @db.NVarChar(Max) // JSON of the remaining spec fields
+
+  createdById Int?
+  createdBy   User?    @relation("assetCreator", fields: [createdById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([siteCode])
+  @@index([status])
+  @@index([userName])
+}

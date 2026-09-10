@@ -1,26 +1,160 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Cool, faintly blue neutrals — same family as the login screen. */
+  --background: #f2f5fb;
+  --foreground: #16202f;
+  --card: #ffffff;
+  --border: #e3e8ef;
+  --border-strong: #ccd4e0;
+  --brand: #175cd3;
+  --brand-strong: #124aab;
+  --brand-weak: #e9f1fd;
+  --muted: #59647a;
+  /* app chrome: deep brand navy for the sidebar */
+  --sidebar: #0f2a4f;
+  --sidebar-line: #ffffff1a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-weak: var(--brand-weak);
+  --color-muted: var(--muted);
+  --color-sidebar: var(--sidebar);
+  --font-sans: var(--font-ui);
+  --font-display: var(--font-itim);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-ui), "Segoe UI", Tahoma, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+button, a, input, select, textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand) 18%, white);
+}
+
+*:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brand) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Shared surface: soft card used across list/detail/dashboard views. */
+@utility card {
+  border-radius: 0.75rem;
+  background: var(--card);
+  box-shadow:
+    0 1px 2px rgb(16 24 40 / 0.04),
+    0 0 0 1px var(--border);
+}
+
+/* Login illustration: connected-sites network. */
+@keyframes lp-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes lp-site-pulse {
+  0%       { transform: scale(1); opacity: 0.5; }
+  70%, 100% { transform: scale(2.6); opacity: 0; }
+}
+@keyframes lp-site-in {
+  from { opacity: 0; scale: 0.7; }
+  to   { opacity: 1; scale: 1; }
+}
+
+@keyframes lp-hub-glow { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@keyframes lp-heartbeat {
+  0%   { r: 3; stroke-opacity: 0.4; }
+  70%  { stroke-opacity: 0; }
+  100% { r: 48; stroke-opacity: 0; }
+}
+@keyframes lp-sway { 0%, 100% { rotate: -0.8deg; } 50% { rotate: 0.8deg; } }
+@keyframes lp-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -1.5px; } }
+
+/* edges draw themselves on once (pathLength is normalised to 1) */
+.lp-edge {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: lp-draw 0.7s ease-out forwards;
+  animation-delay: var(--ed, 0s);
+}
+/* node wrapper is positioned by percentage; keep it centred on its point */
+.lp-site { translate: -50% -50%; }
+.lp-site-pulse { animation: lp-site-pulse 2.6s ease-out infinite; animation-delay: var(--pd, 0s); }
+.lp-site-pulse--fast { animation-duration: 1.6s; animation-delay: 0s; }
+.lp-site-in { animation: lp-site-in 0.55s ease-out both; animation-delay: var(--pd, 0s); }
+
+.lp-hub-glow { animation: lp-hub-glow 4s ease-in-out infinite; }
+.lp-heartbeat { animation: lp-heartbeat 5s ease-out infinite; }
+.lp-sway { animation: lp-sway 22s ease-in-out infinite; }
+.lp-bob { animation: lp-bob 5s ease-in-out infinite; animation-delay: var(--bd, 0s); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-edge { animation: none; stroke-dashoffset: 0; }
+  .lp-site-pulse, .lp-site-in, .lp-hub-glow, .lp-sway, .lp-bob { animation: none; }
+  .lp-heartbeat { display: none; }
+}
+
+/* --- app-wide feedback motion --- */
+@keyframes sk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+.sk { animation: sk-pulse 1.5s ease-in-out infinite; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.toast-in { animation: toast-in 0.22s cubic-bezier(0.16, 0.84, 0.44, 1) both; }
+.toast-out { opacity: 0; transform: translateY(6px); transition: opacity 0.18s ease, transform 0.18s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sk, .toast-in { animation: none; }
+  .toast-out { transition: none; }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
 }

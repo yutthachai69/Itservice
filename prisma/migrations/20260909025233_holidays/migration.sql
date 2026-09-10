@@ -1,0 +1,23 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- CreateTable
+CREATE TABLE [dbo].[Holiday] (
+    [dateKey] NVARCHAR(10) NOT NULL,
+    [name] NVARCHAR(150) NOT NULL,
+    CONSTRAINT [Holiday_pkey] PRIMARY KEY CLUSTERED ([dateKey])
+);
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH

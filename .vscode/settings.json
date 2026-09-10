@@ -1,0 +1,33 @@
+{
+  // Stop the file watcher from crawling generated/vendored trees (big RAM + CPU win)
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.next/**": true,
+    "**/.git/**": true,
+    "**/dist/**": true,
+    "**/.turbo/**": true,
+    "**/coverage/**": true
+  },
+  // Keep search/index out of the same trees
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/package-lock.json": true
+  },
+  "search.followSymlinks": false,
+
+  // Cap the TypeScript language server (default 3072 MB)
+  "typescript.tsserver.maxTsServerMemory": 2048,
+  "typescript.tsserver.watchOptions": {
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents",
+    "fallbackPolling": "dynamicPriority"
+  },
+  "typescript.disableAutomaticTypeAcquisition": true,
+
+  // Trim background churn
+  "npm.autoDetect": "off",
+  "git.autofetch": false,
+  "extensions.autoCheckUpdates": false
+}

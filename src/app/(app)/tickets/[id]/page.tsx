@@ -129,7 +129,7 @@ export default async function TicketDetailPage({
           <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
             {def?.sections.flatMap((s) =>
               s.fields
-                .filter((f) => !["reqName", "reqPosition", "reqPhone", "reqEmail", "serviceSiteCode"].includes(f.key))
+                .filter((f) => !["reqName", "reqDept", "reqPosition", "reqPhone", "reqEmail", "serviceSiteCode"].includes(f.key))
                 .map((f) => (
                   <Row
                     key={f.key}

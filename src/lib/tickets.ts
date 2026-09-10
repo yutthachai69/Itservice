@@ -13,6 +13,7 @@ import type { SessionUser } from "./auth";
 
 const SNAPSHOT_KEYS = new Set([
   "reqName",
+  "reqDept",
   "reqPosition",
   "reqPhone",
   "reqEmail",
@@ -124,7 +125,7 @@ export async function createTicket(opts: {
         siteCode: opts.user.siteCode ?? serviceSiteCode,
         requesterId: opts.user.id,
         reqName: String(values.reqName ?? opts.user.displayName),
-        reqDept: opts.user.departmentName,
+        reqDept: (String(values.reqDept ?? "").trim() || opts.user.departmentName) || null,
         reqPosition: String(values.reqPosition ?? opts.user.position ?? "") || null,
         reqPhone: String(values.reqPhone ?? opts.user.phone ?? "") || null,
         reqEmail: String(values.reqEmail ?? opts.user.email ?? "") || null,
@@ -204,6 +205,7 @@ export async function updateTicket(opts: {
   const newNote = String(opts.raw.note ?? "").trim() || null;
   const patch = {
     reqName: String(values.reqName ?? t.reqName),
+    reqDept: (String(values.reqDept ?? "").trim() || t.reqDept) as string | null,
     reqPosition: (String(values.reqPosition ?? "").trim() || null) as string | null,
     reqPhone: (String(values.reqPhone ?? "").trim() || null) as string | null,
     reqEmail: (String(values.reqEmail ?? "").trim() || null) as string | null,

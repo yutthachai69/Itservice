@@ -68,6 +68,8 @@ const requesterSection: SectionDef = {
   title: "รายละเอียดผู้ขอ (ตรวจสอบให้ถูกต้อง)",
   fields: [
     { key: "reqName", label: "ชื่อ-นามสกุล", type: "text", required: true, colSpan: 1 },
+    // options are injected at render time from /api/departments for the chosen service site
+    { key: "reqDept", label: "ฝ่าย / แผนก", type: "select", colSpan: 1, help: "เลือกจากรายชื่อแผนกของบริษัทที่ขอรับบริการ" },
     { key: "reqPosition", label: "ตำแหน่ง", type: "text", colSpan: 1 },
     { key: "reqPhone", label: "เบอร์โทร/เบอร์โต๊ะ", type: "tel", maxLength: 20, colSpan: 1 },
     { key: "reqEmail", label: "E-Mail", type: "email", maxLength: 70, colSpan: 1 },

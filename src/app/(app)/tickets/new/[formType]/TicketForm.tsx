@@ -14,6 +14,7 @@ export function TicketForm({
   def,
   sites,
   approvers,
+  departments = [],
   prefill,
   signName,
   mode = "create",
@@ -26,6 +27,7 @@ export function TicketForm({
   def: FormDef;
   sites: { code: string; name: string }[];
   approvers: Approver[];
+  departments?: { id: number; name: string }[];
   prefill: Record<string, string>;
   signName: string;
   mode?: "create" | "edit";
@@ -51,6 +53,7 @@ export function TicketForm({
   }, [def, prefill, initialValues]);
 
   const [values, setValues] = useState<Values>(initial);
+  const [deptOptions, setDeptOptions] = useState(departments);
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [note, setNote] = useState(initialNote ?? "");
   const [files, setFiles] = useState<File[]>([]);
@@ -65,6 +68,24 @@ export function TicketForm({
     firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
     firstInvalid.focus({ preventScroll: true });
   }, [errors]);
+
+  // Cascade: reload the ฝ่าย/แผนก list whenever the service site changes.
+  // State is seeded with the server-rendered list, so there is no empty flash
+  // before this first fetch resolves.
+  const serviceSite = typeof values.serviceSiteCode === "string" ? values.serviceSiteCode : "";
+  useEffect(() => {
+    if (!serviceSite) return;
+    let cancelled = false;
+    fetch(`/api/departments?site=${encodeURIComponent(serviceSite)}`)
+      .then((r) => (r.ok ? r.json() : { departments: [] }))
+      .then((d: { departments?: { id: number; name: string }[] }) => {
+        if (!cancelled) setDeptOptions(d.departments ?? []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [serviceSite]);
 
   const set = (k: string, val: string | string[]) =>
     setValues((prev) => ({ ...prev, [k]: val }));
@@ -230,6 +251,7 @@ export function TicketForm({
                 key={f.key}
                 f={f}
                 sites={sites}
+                depts={deptOptions}
                 value={values[f.key]}
                 error={errors[f.key]}
                 onChange={(val) => set(f.key, val)}
@@ -398,6 +420,25 @@ function ErrText({ children }: { children: React.ReactNode }) {
   return <span className="mt-1 block text-xs text-red-600">{children}</span>;
 }
 
+/** Options for a <select> field — sites and ฝ่าย/แผนก are injected at render time. */
+function selectOptions(
+  f: FieldDef,
+  sites: { code: string; name: string }[],
+  depts: { id: number; name: string }[],
+  current: string,
+) {
+  if (f.key === "serviceSiteCode") return sites.map((s) => ({ value: s.code, label: s.name }));
+  if (f.key === "reqDept") {
+    const opts = depts.map((d) => ({ value: d.name, label: d.name }));
+    // keep the value carried over from the profile / another site selectable
+    if (current && !opts.some((o) => o.value === current)) {
+      opts.unshift({ value: current, label: `${current} (จากโปรไฟล์)` });
+    }
+    return opts;
+  }
+  return f.options ?? [];
+}
+
 function fieldLabel(def: FormDef, key: string) {
   for (const section of def.sections) {
     const field = section.fields.find((item) => item.key === key);
@@ -410,6 +451,7 @@ function fieldLabel(def: FormDef, key: string) {
 function Field({
   f,
   sites,
+  depts,
   value,
   error,
   onChange,
@@ -417,6 +459,7 @@ function Field({
 }: {
   f: FieldDef;
   sites: { code: string; name: string }[];
+  depts: { id: number; name: string }[];
   value: string | string[] | undefined;
   error?: string;
   onChange: (v: string) => void;
@@ -471,10 +514,7 @@ function Field({
       ) : f.type === "select" ? (
         <select {...common}>
           <option value="">-- เลือก --</option>
-          {(f.key === "serviceSiteCode"
-            ? sites.map((s) => ({ value: s.code, label: s.name }))
-            : (f.options ?? [])
-          ).map((o) => (
+          {selectOptions(f, sites, depts, v).map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>

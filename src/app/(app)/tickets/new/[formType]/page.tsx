@@ -39,6 +39,14 @@ export default async function NewTicketPage({
   const autoSiteName = detectedSiteCode ? siteName(detectedSiteCode) : null;
   const pdf = formPdfFile(def.code);
 
+  // department options for the initial service site — the form re-fetches
+  // client-side whenever the user changes "บริษัทที่ขอรับบริการ"
+  const departments = await prisma.department.findMany({
+    where: { siteCode: serviceSiteCode },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+
   return (
     <div className="w-full">
       <Link href="/" className="text-sm text-muted transition hover:text-brand hover:underline">
@@ -67,8 +75,10 @@ export default async function NewTicketPage({
         def={def}
         sites={SITES}
         approvers={approvers}
+        departments={departments}
         prefill={{
           reqName: user.displayName,
+          reqDept: user.departmentName ?? "",
           reqPosition: user.position ?? "",
           reqPhone: user.phone ?? "",
           reqEmail: user.email ?? "",

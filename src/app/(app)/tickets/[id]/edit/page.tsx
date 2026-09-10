@@ -40,6 +40,7 @@ export default async function EditTicketPage({
 
   const initialValues: Record<string, string | string[]> = {
     reqName: t.reqName,
+    reqDept: t.reqDept ?? "",
     reqPosition: t.reqPosition ?? "",
     reqPhone: t.reqPhone ?? "",
     reqEmail: t.reqEmail ?? "",
@@ -48,6 +49,12 @@ export default async function EditTicketPage({
   for (const [k, v] of Object.entries(formData)) {
     initialValues[k] = Array.isArray(v) ? v.map(String) : String(v ?? "");
   }
+
+  const departments = await prisma.department.findMany({
+    where: { siteCode: t.serviceSiteCode },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
 
   return (
     <div className="max-w-5xl">
@@ -67,6 +74,7 @@ export default async function EditTicketPage({
         def={def}
         sites={SITES}
         approvers={[]}
+        departments={departments}
         prefill={{}}
         signName={t.reqName}
         initialValues={initialValues}

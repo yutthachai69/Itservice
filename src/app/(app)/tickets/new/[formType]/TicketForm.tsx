@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { FieldDef, FormDef } from "@/lib/form-defs";
+import { Check, MapPin } from "lucide-react";
 import { cn } from "@/lib/ui";
 import { Spinner } from "@/components/Spinner";
 import { LoanAvailabilityHint } from "./LoanAvailabilityHint";
@@ -86,6 +87,10 @@ export function TicketForm({
       cancelled = true;
     };
   }, [serviceSite]);
+
+  const showApprovals = !isEdit && !!def.approvals && def.approvals.length > 0;
+  const approvalsStep = def.sections.length + 1;
+  const extraStep = def.sections.length + (showApprovals ? 2 : 1);
 
   const set = (k: string, val: string | string[]) =>
     setValues((prev) => ({ ...prev, [k]: val }));
@@ -234,33 +239,47 @@ export function TicketForm({
         </p>
       )}
 
-      {def.sections.map((section) => (
-        <fieldset key={section.title} className="border-b border-border px-5 py-6 sm:px-7">
-          <legend className="px-0 text-base font-semibold text-slate-900">{section.title}</legend>
-          {section.title.includes("ผู้ขอ") && (
-            <p className="mb-3 text-xs text-muted">ดึงจากโปรไฟล์ของคุณให้อัตโนมัติ — แก้ไขได้หากไม่ถูกต้อง</p>
-          )}
-          {autoSiteName && section.fields.some((f) => f.key === "serviceSiteCode") && (
-            <p className="mb-3 text-xs text-muted">
-              ตั้ง “บริษัทที่ขอรับบริการ” เป็น <span className="font-medium text-slate-700">{autoSiteName}</span> อัตโนมัติจากเครือข่ายที่คุณเชื่อมต่อ — เปลี่ยนได้
-            </p>
-          )}
-          <div className="mt-4 grid gap-x-5 gap-y-4 sm:grid-cols-2">
-            {section.fields.map((f) => (
-              <Field
-                key={f.key}
-                f={f}
-                sites={sites}
-                depts={deptOptions}
-                value={values[f.key]}
-                error={errors[f.key]}
-                onChange={(val) => set(f.key, val)}
-                onToggle={(opt) => toggle(f.key, opt)}
-              />
-            ))}
-          </div>
-        </fieldset>
-      ))}
+      {def.sections.map((section, i) => {
+        const isRequester = section.title.includes("ผู้ขอ");
+        const hasServiceSite = section.fields.some((f) => f.key === "serviceSiteCode");
+        return (
+          <Section key={section.title} n={i + 1} title={section.title}>
+            {isRequester && (
+              <p className="mb-3 text-xs text-muted">
+                ดึงจากโปรไฟล์ของคุณให้อัตโนมัติ — ตรวจสอบและแก้ไขได้หากไม่ถูกต้อง
+              </p>
+            )}
+            {autoSiteName && hasServiceSite && (
+              <p className="mb-3 flex items-start gap-1.5 rounded-lg bg-brand-weak/60 px-2.5 py-1.5 text-xs text-slate-600">
+                <MapPin size={13} className="mt-0.5 shrink-0 text-brand" aria-hidden="true" />
+                <span>
+                  ตั้ง “บริษัทที่ขอรับบริการ” เป็น{" "}
+                  <span className="font-medium text-slate-800">{autoSiteName}</span> อัตโนมัติจากเครือข่ายที่คุณเชื่อมต่อ — เปลี่ยนได้
+                </span>
+              </p>
+            )}
+            <div
+              className={cn(
+                "grid gap-x-5 gap-y-4 sm:grid-cols-2",
+                isRequester && "rounded-xl border border-border bg-slate-50/60 p-4",
+              )}
+            >
+              {section.fields.map((f) => (
+                <Field
+                  key={f.key}
+                  f={f}
+                  sites={sites}
+                  depts={deptOptions}
+                  value={values[f.key]}
+                  error={errors[f.key]}
+                  onChange={(val) => set(f.key, val)}
+                  onToggle={(opt) => toggle(f.key, opt)}
+                />
+              ))}
+            </div>
+          </Section>
+        );
+      })}
 
       {showLoanCheck && (
         <LoanAvailabilityHint
@@ -270,10 +289,10 @@ export function TicketForm({
         />
       )}
 
-      {!isEdit && def.approvals && def.approvals.length > 0 && (
-        <fieldset className="border-b border-border px-5 py-6 sm:px-7">
-          <legend className="px-0 text-base font-semibold text-slate-900">ผู้ตรวจสอบ / อนุมัติ</legend>
-          <div className="mt-4 grid gap-x-5 gap-y-4 sm:grid-cols-2">
+      {showApprovals && def.approvals && (
+        <Section n={approvalsStep} title="ผู้ตรวจสอบ / อนุมัติ">
+          <p className="mb-3 text-xs text-muted">เลือกผู้ที่จะตรวจสอบและอนุมัติคำร้องนี้ตามลำดับ</p>
+          <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
             {def.approvals.map((step) => {
               const opts = approvers.filter((a) => a.type === step.approverType);
               return (
@@ -301,13 +320,13 @@ export function TicketForm({
               );
             })}
           </div>
-        </fieldset>
+        </Section>
       )}
 
-      <div className="space-y-4 border-b border-border px-5 py-6 sm:px-7">
-        <h2 className="text-base font-semibold text-slate-900">ข้อมูลเพิ่มเติม</h2>
+      <Section n={extraStep} title="ข้อมูลเพิ่มเติม" subtitle="ไม่บังคับ">
+        <div className="space-y-4">
         <label className="block">
-          <span className="text-sm text-slate-600">ข้อมูลเพิ่มเติม</span>
+          <span className="text-sm font-medium text-slate-700">รายละเอียดเพิ่มเติม</span>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -377,10 +396,11 @@ export function TicketForm({
             รับสถานะแจ้งเตือนทางอีเมล
           </label>
         )}
-        <p className="text-sm text-slate-500">
+        <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
           ลงนามผู้ขอ: <span className="font-medium text-slate-700">{signName}</span>
         </p>
-      </div>
+        </div>
+      </Section>
 
       {formError && (
         <p role="alert" className="border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700 sm:px-7">
@@ -418,6 +438,32 @@ function inputCls(error?: string) {
 
 function ErrText({ children }: { children: React.ReactNode }) {
   return <span className="mt-1 block text-xs text-red-600">{children}</span>;
+}
+
+/** A numbered step in the form. */
+function Section({
+  n,
+  title,
+  subtitle,
+  children,
+}: {
+  n: number;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <fieldset className="border-b border-border px-5 py-6 sm:px-7">
+      <legend className="flex w-full items-center gap-2.5 px-0">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-weak text-xs font-semibold text-brand">
+          {n}
+        </span>
+        <span className="text-base font-semibold text-slate-900">{title}</span>
+        {subtitle && <span className="text-xs font-normal text-slate-400">{subtitle}</span>}
+      </legend>
+      <div className="mt-4 sm:pl-[2.125rem]">{children}</div>
+    </fieldset>
+  );
 }
 
 /** Options for a <select> field — sites and ฝ่าย/แผนก are injected at render time. */
@@ -470,23 +516,43 @@ function Field({
   if (f.type === "checkboxes") {
     const arr = Array.isArray(value) ? value : [];
     return (
-      <div className={span}>
+      <div className={cn("sm:col-span-2", span)}>
         <span className="text-sm font-medium text-slate-700">
           {f.label} {f.required && <span className="text-red-500">*</span>}
         </span>
-        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-2">
-          {(f.options ?? []).map((o) => (
-            <label key={o.value} className="flex items-center gap-2 text-sm text-slate-700">
-              <input
-                id={o === f.options?.[0] ? f.key : `${f.key}-${o.value}`}
-                type="checkbox"
-                checked={arr.includes(o.value)}
-                onChange={() => onToggle(o.value)}
-                aria-invalid={error ? ("true" as const) : ("false" as const)}
-              />
-              {o.label}
-            </label>
-          ))}
+        <div className="mt-2 flex flex-wrap gap-2">
+          {(f.options ?? []).map((o, idx) => {
+            const on = arr.includes(o.value);
+            return (
+              <label
+                key={o.value}
+                className={cn(
+                  "inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition select-none",
+                  on
+                    ? "border-brand bg-brand-weak font-medium text-brand"
+                    : "border-border-strong text-slate-600 hover:border-brand/40 hover:bg-brand-weak/40",
+                )}
+              >
+                <input
+                  id={idx === 0 ? f.key : `${f.key}-${o.value}`}
+                  type="checkbox"
+                  className="sr-only"
+                  checked={on}
+                  onChange={() => onToggle(o.value)}
+                  aria-invalid={error ? ("true" as const) : ("false" as const)}
+                />
+                <span
+                  className={cn(
+                    "flex h-4 w-4 items-center justify-center rounded border",
+                    on ? "border-brand bg-brand text-white" : "border-slate-300 bg-white",
+                  )}
+                >
+                  {on && <Check size={12} strokeWidth={3} aria-hidden="true" />}
+                </span>
+                {o.label}
+              </label>
+            );
+          })}
         </div>
         {error && <ErrText>{error}</ErrText>}
       </div>

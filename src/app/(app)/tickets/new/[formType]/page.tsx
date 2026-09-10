@@ -8,7 +8,7 @@ import { siteCodeFromHeaders } from "@/lib/site-detect";
 import { formPdfFile } from "@/lib/form-files";
 import { TicketForm } from "./TicketForm";
 import { PageHeader } from "@/components/PageHeader";
-import { Download } from "lucide-react";
+import { Check, Clock, Download } from "lucide-react";
 import Link from "next/link";
 
 export default async function NewTicketPage({
@@ -48,7 +48,7 @@ export default async function NewTicketPage({
   });
 
   return (
-    <div className="w-full">
+    <div className="mx-auto w-full max-w-[64rem]">
       <Link href="/" className="text-sm text-muted transition hover:text-brand hover:underline">
         ← กลับไปเลือกบริการ
       </Link>
@@ -56,7 +56,7 @@ export default async function NewTicketPage({
         className="mt-4"
         chip={`${def.code} · เปิดคำร้องใหม่`}
         title={def.title}
-        subtitle="กรอกข้อมูลด้านล่างให้ครบถ้วนเพื่อให้ IT ตรวจสอบและดำเนินการได้เร็วขึ้น"
+        subtitle="กรอกข้อมูลตามขั้นตอนด้านล่าง ระบบจะส่งให้ IT ตรวจสอบทันทีที่กด “ส่งคำร้อง”"
         actions={
           pdf ? (
             <a
@@ -71,23 +71,69 @@ export default async function NewTicketPage({
         }
       />
 
-      <TicketForm
-        def={def}
-        sites={SITES}
-        approvers={approvers}
-        departments={departments}
-        prefill={{
-          reqName: user.displayName,
-          reqDept: user.departmentName ?? "",
-          reqPosition: user.position ?? "",
-          reqPhone: user.phone ?? "",
-          reqEmail: user.email ?? "",
-          serviceSiteCode,
-        }}
-        signName={user.displayName}
-        showLoanCheck={def.type === "F03"}
-        autoSiteName={autoSiteName}
-      />
+      <div className="mt-5 lg:grid lg:grid-cols-[minmax(0,1fr)_16.5rem] lg:items-start lg:gap-7">
+        <TicketForm
+          def={def}
+          sites={SITES}
+          approvers={approvers}
+          departments={departments}
+          prefill={{
+            reqName: user.displayName,
+            reqDept: user.departmentName ?? "",
+            reqPosition: user.position ?? "",
+            reqPhone: user.phone ?? "",
+            reqEmail: user.email ?? "",
+            serviceSiteCode,
+          }}
+          signName={user.displayName}
+          showLoanCheck={def.type === "F03"}
+          autoSiteName={autoSiteName}
+        />
+
+        <aside className="mt-5 lg:sticky lg:top-24 lg:mt-0">
+          <div className="card space-y-4 p-5">
+            <div>
+              <p className="font-display text-slate-900">{def.shortTitle}</p>
+              <p className="mt-0.5 text-xs text-muted">
+                {def.code} · {def.title}
+              </p>
+            </div>
+            <div className="flex items-start gap-2 rounded-lg bg-brand-weak/60 px-3 py-2 text-xs text-slate-600">
+              <Clock size={14} className="mt-0.5 shrink-0 text-brand" aria-hidden="true" />
+              <span>
+                IT รับเรื่องภายในราว{" "}
+                <span className="font-medium text-slate-800">{def.slaHours} ชั่วโมงทำการ</span>
+              </span>
+            </div>
+            <div className="border-t border-border pt-3">
+              <p className="text-xs font-semibold text-slate-700">ช่วยให้งานเสร็จเร็วขึ้น</p>
+              <ul className="mt-2 space-y-2 text-xs text-muted">
+                {[
+                  "อธิบายอาการให้ชัด เกิดตอนไหน มีข้อความแจ้งเตือนว่าอะไร",
+                  "แนบภาพหน้าจอหรือไฟล์ที่เกี่ยวข้อง",
+                  "ระบุเบอร์ที่ติดต่อได้จริง เผื่อ IT โทรกลับ",
+                ].map((tip) => (
+                  <li key={tip} className="flex gap-1.5">
+                    <Check size={13} className="mt-0.5 shrink-0 text-brand" aria-hidden="true" />
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {pdf && (
+              <a
+                href={`/forms/${encodeURIComponent(pdf)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 border-t border-border pt-3 text-xs font-medium text-brand transition hover:underline"
+              >
+                <Download size={13} aria-hidden="true" />
+                ดูแบบฟอร์มกระดาษ (PDF)
+              </a>
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

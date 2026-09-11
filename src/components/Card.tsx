@@ -26,9 +26,14 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4", className)}>
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-x-5 gap-y-2 border-b border-border bg-surface-subtle/70 px-5 py-3.5",
+        className,
+      )}
+    >
       <div className="min-w-0">
-        <h2 className="font-semibold text-slate-900">{title}</h2>
+        <h2 className="text-sm font-semibold text-slate-950">{title}</h2>
         {description && <p className="mt-0.5 text-xs text-muted">{description}</p>}
       </div>
       {action &&

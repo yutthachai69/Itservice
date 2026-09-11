@@ -1,15 +1,17 @@
-import { notFound, redirect } from "next/navigation";
-import { headers } from "next/headers";
-import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
-import { getFormDef } from "@/lib/form-defs";
-import { SITES, isIT, siteName } from "@/lib/constants";
-import { siteCodeFromHeaders } from "@/lib/site-detect";
-import { formPdfFile } from "@/lib/form-files";
-import { TicketForm } from "./TicketForm";
-import { PageHeader } from "@/components/PageHeader";
-import { Check, Clock, Download } from "lucide-react";
 import Link from "next/link";
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+import { ArrowLeft, Clock3, Download, ListChecks, Paperclip } from "lucide-react";
+import { buttonClass } from "@/components/Button";
+import { PageHeader } from "@/components/PageHeader";
+import { getCurrentUser } from "@/lib/auth";
+import { isIT, SITES, siteName } from "@/lib/constants";
+import { prisma } from "@/lib/db";
+import { formPdfFile } from "@/lib/form-files";
+import { docUrls } from "@/lib/doc-meta";
+import { getFormDef } from "@/lib/form-defs";
+import { siteCodeFromHeaders } from "@/lib/site-detect";
+import { TicketForm } from "./TicketForm";
 
 export default async function NewTicketPage({
   params,
@@ -32,108 +34,110 @@ export default async function NewTicketPage({
       })
     : [];
 
-  // If the request comes from a known site LAN, default the "service site" to
-  // where the requester physically is — otherwise fall back to their profile.
   const detectedSiteCode = siteCodeFromHeaders(await headers());
   const serviceSiteCode = detectedSiteCode ?? user.siteCode ?? "02";
   const autoSiteName = detectedSiteCode ? siteName(detectedSiteCode) : null;
   const pdf = formPdfFile(def.code);
 
-  // department options for the initial service site — the form re-fetches
-  // client-side whenever the user changes "บริษัทที่ขอรับบริการ"
   const departments = await prisma.department.findMany({
     where: { siteCode: serviceSiteCode },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });
 
+  const requiredCount =
+    def.sections.reduce(
+      (total, section) => total + section.fields.filter((field) => field.required).length,
+      0,
+    ) + (def.approvals?.length ?? 0);
+
   return (
-    <div className="mx-auto w-full max-w-[64rem]">
-      <Link href="/" className="text-sm text-muted transition hover:text-brand hover:underline">
-        ← กลับไปเลือกบริการ
+    <div className="w-full">
+      <Link
+        href="/"
+        className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-muted transition-colors hover:text-brand"
+      >
+        <ArrowLeft size={14} aria-hidden="true" />
+        กลับไปเลือกบริการ
       </Link>
+
       <PageHeader
-        className="mt-4"
         chip={`${def.code} · เปิดคำร้องใหม่`}
-        title={def.title}
-        subtitle="กรอกข้อมูลตามขั้นตอนด้านล่าง ระบบจะส่งให้ IT ตรวจสอบทันทีที่กด “ส่งคำร้อง”"
+        title={def.shortTitle}
+        subtitle={def.title}
         actions={
           pdf ? (
             <a
-              href={`/forms/${encodeURIComponent(pdf)}`}
-              download
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border-strong px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand"
+              href={docUrls(def.code).download}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonClass({ variant: "secondary", size: "sm" })}
             >
-              <Download size={15} aria-hidden="true" />
-              แบบฟอร์มกระดาษ (PDF)
+              <Download size={14} aria-hidden="true" />
+              แบบฟอร์มกระดาษ
             </a>
           ) : undefined
         }
       />
 
-      <div className="mt-5 lg:grid lg:grid-cols-[minmax(0,1fr)_16.5rem] lg:items-start lg:gap-7">
-        <TicketForm
-          def={def}
-          sites={SITES}
-          approvers={approvers}
-          departments={departments}
-          prefill={{
-            reqName: user.displayName,
-            reqDept: user.departmentName ?? "",
-            reqPosition: user.position ?? "",
-            reqPhone: user.phone ?? "",
-            reqEmail: user.email ?? "",
-            serviceSiteCode,
-          }}
-          signName={user.displayName}
-          showLoanCheck={def.type === "F03"}
-          autoSiteName={autoSiteName}
+      <section
+        aria-label="ข้อมูลก่อนกรอกคำร้อง"
+        className="mb-5 grid overflow-hidden rounded-md border border-border bg-card sm:grid-cols-3"
+      >
+        <ContextItem
+          icon={Clock3}
+          label="ระยะเวลารับเรื่อง"
+          value={`ประมาณ ${def.slaHours} ชั่วโมงทำการ`}
         />
+        <ContextItem
+          icon={ListChecks}
+          label="ข้อมูลจำเป็น"
+          value={`${requiredCount} ช่อง`}
+        />
+        <ContextItem
+          icon={Paperclip}
+          label="ไฟล์ประกอบ"
+          value="สูงสุด 5 ไฟล์ · ไฟล์ละ 10 MB"
+        />
+      </section>
 
-        <aside className="mt-5 lg:sticky lg:top-24 lg:mt-0">
-          <div className="card space-y-4 p-5">
-            <div>
-              <p className="font-display text-slate-900">{def.shortTitle}</p>
-              <p className="mt-0.5 text-xs text-muted">
-                {def.code} · {def.title}
-              </p>
-            </div>
-            <div className="flex items-start gap-2 rounded-lg bg-brand-weak/60 px-3 py-2 text-xs text-slate-600">
-              <Clock size={14} className="mt-0.5 shrink-0 text-brand" aria-hidden="true" />
-              <span>
-                IT รับเรื่องภายในราว{" "}
-                <span className="font-medium text-slate-800">{def.slaHours} ชั่วโมงทำการ</span>
-              </span>
-            </div>
-            <div className="border-t border-border pt-3">
-              <p className="text-xs font-semibold text-slate-700">ช่วยให้งานเสร็จเร็วขึ้น</p>
-              <ul className="mt-2 space-y-2 text-xs text-muted">
-                {[
-                  "อธิบายอาการให้ชัด เกิดตอนไหน มีข้อความแจ้งเตือนว่าอะไร",
-                  "แนบภาพหน้าจอหรือไฟล์ที่เกี่ยวข้อง",
-                  "ระบุเบอร์ที่ติดต่อได้จริง เผื่อ IT โทรกลับ",
-                ].map((tip) => (
-                  <li key={tip} className="flex gap-1.5">
-                    <Check size={13} className="mt-0.5 shrink-0 text-brand" aria-hidden="true" />
-                    <span>{tip}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {pdf && (
-              <a
-                href={`/forms/${encodeURIComponent(pdf)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1.5 border-t border-border pt-3 text-xs font-medium text-brand transition hover:underline"
-              >
-                <Download size={13} aria-hidden="true" />
-                ดูแบบฟอร์มกระดาษ (PDF)
-              </a>
-            )}
-          </div>
-        </aside>
-      </div>
+      <TicketForm
+        def={def}
+        sites={SITES}
+        approvers={approvers}
+        departments={departments}
+        prefill={{
+          reqName: user.displayName,
+          reqDept: user.departmentName ?? "",
+          reqPosition: user.position ?? "",
+          reqPhone: user.phone ?? "",
+          reqEmail: user.email ?? "",
+          serviceSiteCode,
+        }}
+        signName={user.displayName}
+        showLoanCheck={def.type === "F03"}
+        autoSiteName={autoSiteName}
+      />
+    </div>
+  );
+}
+
+function ContextItem({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon?: typeof Clock3;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex min-h-[70px] items-center gap-3 border-t border-border px-5 py-3 first:border-t-0 sm:border-t-0 sm:border-l sm:first:border-l-0">
+      {Icon && <Icon size={17} strokeWidth={1.7} className="shrink-0 text-brand" aria-hidden="true" />}
+      <span>
+        <span className="block text-[11px] text-muted">{label}</span>
+        <span className="mt-0.5 block text-sm font-medium text-slate-900">{value}</span>
+      </span>
     </div>
   );
 }

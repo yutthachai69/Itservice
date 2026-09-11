@@ -1,9 +1,6 @@
 import { cn } from "@/lib/ui";
 
-/**
- * Standard heading block for inner pages: playful display title, optional code
- * chip, count, subtitle, and a right-aligned actions slot.
- */
+/** Standard heading for operational pages. Display fonts stay on marketing surfaces. */
 export function PageHeader({
   title,
   subtitle,
@@ -22,19 +19,24 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4",
+        "mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-border pb-4",
         className,
       )}
     >
       <div className="min-w-0">
         {chip && (
-          <span className="mb-1 inline-block rounded-lg bg-brand/10 px-2 py-0.5 text-xs font-semibold text-brand">
+          <span className="mb-1.5 flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] text-brand">
+            <span className="h-px w-4 bg-brand" aria-hidden="true" />
             {chip}
           </span>
         )}
-        <h1 className="font-display text-xl text-slate-900 sm:text-2xl">
+        <h1 className="text-xl font-semibold leading-tight tracking-[-0.015em] text-slate-950 sm:text-[1.375rem]">
           {title}
-          {count != null && <span className="ml-2 align-middle text-base font-sans text-slate-400">({count})</span>}
+          {count != null && (
+            <span className="ml-2 align-middle text-sm font-normal tracking-normal text-slate-400">
+              {count.toLocaleString("th-TH")} รายการ
+            </span>
+          )}
         </h1>
         {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
       </div>

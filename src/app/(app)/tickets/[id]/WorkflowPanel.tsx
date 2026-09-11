@@ -2,20 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { AlertTriangle, Check, MessageSquare, RotateCcw, UserRoundCheck, X } from "lucide-react";
+import { Button, ButtonLink } from "@/components/Button";
 import { useToast } from "@/components/Toast";
-import { Spinner } from "@/components/Spinner";
 
 const ACTION_DONE: Record<string, string> = {
   RECEIVE: "รับงานแล้ว",
   PROGRESS: "บันทึกความคืบหน้าแล้ว",
-  RESOLVE: "แจ้งเสร็จแล้ว — รอผู้แจ้งยืนยัน",
+  RESOLVE: "แจ้งดำเนินการเสร็จแล้ว รอผู้แจ้งยืนยัน",
   CLOSE: "ปิดงานแล้ว",
   ASSIGN: "มอบหมายงานแล้ว",
   CONFIRM_CLOSE: "ยืนยันปิดงานแล้ว ขอบคุณครับ",
   REJECT_RESOLVE: "ส่งกลับให้ IT ดำเนินการต่อแล้ว",
   CANCEL: "ยกเลิกเรื่องแล้ว",
-  COMMENT: "บันทึกความเห็นแล้ว",
+  COMMENT: "บันทึกความคิดเห็นแล้ว",
   REOPEN: "เปิดเรื่องอีกครั้งแล้ว",
 };
 
@@ -43,237 +43,217 @@ export function WorkflowPanel({
 }) {
   const router = useRouter();
   const { success, error: toastError } = useToast();
-  const [busy, setBusy] = useState(false);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [comment, setComment] = useState("");
   const [assignee, setAssignee] = useState("");
   const [err, setErr] = useState<string | null>(null);
 
+  const busy = busyAction !== null;
   const closed = status === "CLOSED" || status === "CANCELLED";
+  const canComment = comment.trim().length > 0;
+  const workflow = workflowCopy(status, itStatus, closed);
 
-  /** button label with a spinner while its own action is in flight */
-  const lbl = (action: string, text: string) => (
-    <>
-      {busyAction === action && <Spinner />}
-      {text}
-    </>
-  );
+  function reportError(message: string) {
+    setErr(message);
+    toastError(message);
+  }
 
   async function run(action: string, extra: Record<string, unknown> = {}) {
-    setBusy(true);
+    if (action === "COMMENT" && !canComment) {
+      reportError("กรุณาพิมพ์ความคิดเห็นก่อนบันทึก");
+      return;
+    }
+    if (action === "REJECT_RESOLVE" && !canComment) {
+      reportError("กรุณาระบุเหตุผลที่งานยังไม่เรียบร้อย");
+      return;
+    }
+    if (action === "CLOSE" && !window.confirm("ต้องการปิดคำร้องนี้ทันทีใช่หรือไม่?")) return;
+    if (action === "CANCEL" && !window.confirm("ต้องการยกเลิกคำร้องนี้ใช่หรือไม่? การดำเนินการจะหยุดลง")) return;
+
     setBusyAction(action);
     setErr(null);
-    const res = await fetch(`/api/tickets/${ticketId}/transition`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, comment: comment || undefined, ...extra }),
-    });
-    setBusy(false);
-    setBusyAction(null);
-    if (res.ok) {
+    try {
+      const response = await fetch(`/api/tickets/${ticketId}/transition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, comment: comment.trim() || undefined, ...extra }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error ?? "ทำรายการไม่สำเร็จ");
+      }
       setComment("");
       success(ACTION_DONE[action] ?? "ทำรายการแล้ว");
       router.refresh();
-    } else {
-      const b = await res.json().catch(() => ({}));
-      const msg = b.error ?? "ทำรายการไม่สำเร็จ";
-      setErr(msg);
-      toastError(msg);
+    } catch (error) {
+      reportError(error instanceof Error ? error.message : "ทำรายการไม่สำเร็จ");
+    } finally {
+      setBusyAction(null);
     }
   }
 
   async function decide(approvalId: number, decision: "APPROVED" | "REJECTED") {
-    setBusy(true);
-    setBusyAction(`decide-${approvalId}-${decision}`);
+    const actionKey = `decide-${approvalId}-${decision}`;
+    setBusyAction(actionKey);
     setErr(null);
-    const res = await fetch(`/api/tickets/${ticketId}/approve`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ approvalId, decision, comment: comment || undefined }),
-    });
-    setBusy(false);
-    setBusyAction(null);
-    if (res.ok) {
+    try {
+      const response = await fetch(`/api/tickets/${ticketId}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approvalId, decision, comment: comment.trim() || undefined }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error ?? "ทำรายการไม่สำเร็จ");
+      }
       setComment("");
       success(decision === "APPROVED" ? "อนุมัติแล้ว" : "บันทึกว่าไม่อนุมัติแล้ว");
       router.refresh();
-    } else {
-      const b = await res.json().catch(() => ({}));
-      const msg = b.error ?? "ทำรายการไม่สำเร็จ";
-      setErr(msg);
-      toastError(msg);
+    } catch (error) {
+      reportError(error instanceof Error ? error.message : "ทำรายการไม่สำเร็จ");
+    } finally {
+      setBusyAction(null);
     }
   }
 
-  const primary =
-    "inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-brand/30 focus:ring-offset-2 active:scale-[0.99] disabled:opacity-50";
-  const secondary =
-    "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border-strong px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-[0.99] disabled:opacity-50";
-
-  // one-line "where are we / what to do" for IT
-  const itHint = !isIT
-    ? null
-    : itStatus === "NEW"
-      ? "ยังไม่มีใครรับคำร้องนี้ — กด “รับงาน” เพื่อเริ่มดำเนินการ"
-      : status === "RESOLVED"
-        ? "แจ้งเสร็จแล้ว กำลังรอผู้แจ้งยืนยันปิดงาน"
-        : "คุณกำลังดำเนินการอยู่ — อัปเดตความคืบหน้า หรือกด “แจ้งเสร็จ” เมื่อทำเสร็จ";
-
   return (
-    <div className="space-y-3 card p-4 shadow-sm">
-      <div>
-        <h2 className="font-semibold text-slate-900">การดำเนินการ</h2>
-        {itHint && <p className="mt-1 text-xs text-muted">{itHint}</p>}
-      </div>
+    <section aria-labelledby="workflow-heading" className="overflow-hidden rounded-md border border-border bg-card">
+      <header className="bg-sidebar px-5 py-4 text-white">
+        <p className="text-[11px] font-medium tracking-[0.08em] text-blue-100/60">ขั้นตอนปัจจุบัน</p>
+        <h2 id="workflow-heading" className="mt-1 text-base font-semibold">{workflow.title}</h2>
+        <p className="mt-1 text-xs leading-5 text-blue-100/65">{workflow.description}</p>
+      </header>
 
-      <textarea
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        rows={2}
-        placeholder="ความเห็น / บันทึกการทำงาน — จะแนบไปกับปุ่มที่กดถัดไป (ไม่บังคับ)"
-        className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15"
-      />
+      <div className="space-y-5 p-4 sm:p-5">
+        <div>
+          <label htmlFor="workflow-comment" className="text-xs font-semibold text-slate-700">บันทึกการดำเนินงาน</label>
+          <textarea
+            id="workflow-comment"
+            value={comment}
+            onChange={(event) => {
+              setComment(event.target.value);
+              if (err) setErr(null);
+            }}
+            rows={3}
+            placeholder="ระบุความคืบหน้า ความเห็น หรือเหตุผล..."
+            className="mt-1.5 w-full resize-y rounded-md border border-border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15"
+          />
+          <p className="mt-1 text-[11px] leading-4 text-muted">ข้อความนี้จะถูกแนบกับรายการที่ดำเนินการถัดไป</p>
+        </div>
 
-      {err && <p className="rounded bg-red-50 px-2 py-1 text-xs text-red-700">{err}</p>}
+        {err && <p role="alert" aria-live="polite" className="border-l-2 border-red-500 bg-red-50 px-3 py-2 text-xs text-red-700">{err}</p>}
 
-      {isIT && !closed && (
-        <div className="space-y-2">
-          {pendingApprovals.length > 0 && (
-            <div className="rounded-lg bg-amber-50 p-2 space-y-2">
-              <p className="text-xs font-medium text-amber-800">รออนุมัติ</p>
-              {pendingApprovals.map((a) => (
-                <div key={a.id} className="flex items-center gap-1.5">
-                  <span className="flex-1 text-xs text-amber-900">{a.name}</span>
-                  <button
-                    disabled={busy}
-                    onClick={() => decide(a.id, "APPROVED")}
-                    className="rounded bg-emerald-600 px-2 py-1 text-xs text-white"
-                  >
-                    อนุมัติ
-                  </button>
-                  <button
-                    disabled={busy}
-                    onClick={() => decide(a.id, "REJECTED")}
-                    className="rounded bg-red-600 px-2 py-1 text-xs text-white"
-                  >
-                    ไม่อนุมัติ
-                  </button>
+        {isIT && !closed && pendingApprovals.length > 0 && (
+          <section aria-labelledby="approval-heading" className="border-t border-border pt-4">
+            <h3 id="approval-heading" className="text-xs font-semibold text-slate-900">รายการรออนุมัติ</h3>
+            <div className="mt-2 divide-y divide-border rounded-md border border-border">
+              {pendingApprovals.map((approval) => (
+                <div key={approval.id} className="space-y-2.5 p-3">
+                  <div>
+                    <p className="text-[11px] text-muted">{approvalStepLabel(approval.step)}</p>
+                    <p className="mt-0.5 text-sm font-medium text-slate-800">{approval.name}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button size="sm" variant="secondary" loading={busyAction === `decide-${approval.id}-APPROVED`} disabled={busy} onClick={() => decide(approval.id, "APPROVED")}>
+                      <Check size={14} aria-hidden="true" /> อนุมัติ
+                    </Button>
+                    <Button size="sm" variant="danger" loading={busyAction === `decide-${approval.id}-REJECTED`} disabled={busy} onClick={() => decide(approval.id, "REJECTED")}>
+                      <X size={14} aria-hidden="true" /> ไม่อนุมัติ
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
-          )}
-
-          {/* primary next step */}
-          {itStatus === "NEW" && (
-            <button
-              disabled={busy}
-              onClick={() => run("RECEIVE")}
-              className={`${primary} bg-brand hover:bg-brand-strong`}
-            >
-              {lbl("RECEIVE", "รับงาน")}
-            </button>
-          )}
-          {itStatus !== "NEW" && status !== "RESOLVED" && (
-            <button
-              disabled={busy}
-              onClick={() => run("RESOLVE")}
-              className={`${primary} bg-brand hover:bg-brand-strong`}
-            >
-              {lbl("RESOLVE", "แจ้งเสร็จ (ให้ผู้แจ้งยืนยัน)")}
-            </button>
-          )}
-          {status === "RESOLVED" && (
-            <p className="rounded-lg bg-violet-50 px-2 py-1.5 text-xs text-violet-800">
-              รอผู้แจ้งยืนยันปิดงาน — ปุ่มด้านล่างใช้เมื่อผู้แจ้งไม่ตอบ
-            </p>
-          )}
-
-          {/* secondary steps */}
-          <div className="space-y-2 border-t border-border pt-2">
-            {itStatus !== "NEW" && status !== "RESOLVED" && (
-              <button disabled={busy} onClick={() => run("PROGRESS")} className={secondary}>
-                {lbl("PROGRESS", "อัปเดตความคืบหน้า")}
-              </button>
-            )}
-            <button disabled={busy} onClick={() => run("CLOSE")} className={secondary}>
-              {lbl("CLOSE", status === "RESOLVED" ? "ปิดงาน (ผู้แจ้งไม่ตอบ)" : "ปิดงานทันที")}
-            </button>
-            <div className="flex gap-1.5">
-              <select
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-                className="flex-1 rounded-lg border border-border px-2 py-1.5 text-sm"
-              >
-                <option value="">มอบหมายให้...</option>
-                {itStaff.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.displayName}
-                  </option>
-                ))}
-              </select>
-              <button
-                disabled={busy || !assignee}
-                onClick={() => run("ASSIGN", { assignedToId: Number(assignee) })}
-                className="rounded-lg border border-border-strong px-3 py-1.5 text-sm font-medium text-slate-600 disabled:opacity-50"
-              >
-                มอบหมาย
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isRequester && status === "RESOLVED" && (
-        <div className="space-y-2 rounded-lg bg-emerald-50 p-2">
-          <p className="text-xs font-medium text-emerald-800">IT แจ้งว่าดำเนินการเสร็จแล้ว</p>
-          <button disabled={busy} onClick={() => run("CONFIRM_CLOSE")} className={`${primary} bg-emerald-700 hover:bg-emerald-800`}>
-            {lbl("CONFIRM_CLOSE", "ยืนยัน เรียบร้อยแล้ว (ปิดงาน)")}
-          </button>
-          <button
-            disabled={busy}
-            onClick={() => run("REJECT_RESOLVE")}
-            className="w-full rounded-lg border border-amber-400 px-3 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-50 disabled:opacity-50"
-          >
-            ยังไม่เรียบร้อย (ระบุเหตุผลในช่องความเห็น)
-          </button>
-        </div>
-      )}
-
-      {isRequester && !isIT && !closed && status !== "RESOLVED" && (
-        <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-muted">
-          IT กำลังตรวจสอบและดำเนินการคำร้องของคุณ ระบบจะแจ้งเมื่อมีความคืบหน้า
-        </p>
-      )}
-
-      {/* shared secondary / destructive */}
-      <div className="space-y-2 border-t border-border pt-2">
-        <button disabled={busy} onClick={() => run("COMMENT")} className={secondary}>
-          {lbl("COMMENT", "บันทึกความเห็น")}
-        </button>
-
-        {!closed && (isIT || isRequester) && (
-          <button
-            disabled={busy}
-            onClick={() => run("CANCEL")}
-            className="w-full rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-          >
-            ยกเลิกเรื่อง
-          </button>
+          </section>
         )}
 
-        {closed && (isIT || isRequester) && (
-          <button disabled={busy} onClick={() => run("REOPEN")} className={secondary}>
-            {lbl("REOPEN", "เปิดเรื่องอีกครั้ง")}
-          </button>
+        {isIT && !closed && itStatus === "NEW" && (
+          <Button className="w-full" loading={busyAction === "RECEIVE"} disabled={busy} onClick={() => run("RECEIVE")}>
+            <UserRoundCheck size={16} aria-hidden="true" /> รับงานนี้
+          </Button>
+        )}
+
+        {isIT && !closed && itStatus !== "NEW" && status !== "RESOLVED" && (
+          <Button className="w-full" loading={busyAction === "RESOLVE"} disabled={busy} onClick={() => run("RESOLVE")}>
+            <Check size={16} aria-hidden="true" /> แจ้งดำเนินการเสร็จ
+          </Button>
+        )}
+
+        {isIT && !closed && status === "RESOLVED" && (
+          <p className="border-l-2 border-brand bg-brand-weak px-3 py-2.5 text-xs leading-5 text-slate-700">ส่งผลให้ผู้แจ้งแล้ว ขณะนี้รอผู้แจ้งตรวจสอบและยืนยันปิดงาน</p>
+        )}
+
+        {isRequester && status === "RESOLVED" && (
+          <section aria-labelledby="requester-decision-heading" className="space-y-2.5 border-t border-border pt-4">
+            <div>
+              <h3 id="requester-decision-heading" className="text-sm font-semibold text-slate-900">ตรวจสอบผลการดำเนินงาน</h3>
+              <p className="mt-0.5 text-xs text-muted">IT แจ้งว่าดำเนินการเสร็จแล้ว กรุณายืนยันผล</p>
+            </div>
+            <Button className="w-full" loading={busyAction === "CONFIRM_CLOSE"} disabled={busy} onClick={() => run("CONFIRM_CLOSE")}>
+              <Check size={16} aria-hidden="true" /> เรียบร้อยแล้ว ปิดงาน
+            </Button>
+            <Button className="w-full" variant="secondary" loading={busyAction === "REJECT_RESOLVE"} disabled={busy} onClick={() => run("REJECT_RESOLVE")}>ยังไม่เรียบร้อย</Button>
+          </section>
+        )}
+
+        {isRequester && !isIT && !closed && status !== "RESOLVED" && (
+          <p className="border-l-2 border-brand bg-surface-subtle px-3 py-2.5 text-xs leading-5 text-slate-600">ทีม IT กำลังตรวจสอบคำร้อง ระบบจะแสดงความคืบหน้าที่หน้านี้เมื่อมีการอัปเดต</p>
+        )}
+
+        {status === "CLOSED" && isRequester && !hasEvaluation && <ButtonLink href={`/evaluate/${ticketId}`} className="w-full">ประเมินความพึงพอใจ</ButtonLink>}
+        {hasEvaluation && <p className="border-l-2 border-emerald-500 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">ประเมินความพึงพอใจแล้ว ขอบคุณสำหรับความคิดเห็น</p>}
+
+        <section aria-labelledby="supporting-actions-heading" className="space-y-3 border-t border-border pt-4">
+          <h3 id="supporting-actions-heading" className="text-xs font-semibold text-slate-900">เครื่องมือเพิ่มเติม</h3>
+          {isIT && !closed && itStatus !== "NEW" && status !== "RESOLVED" && (
+            <Button className="w-full" variant="secondary" loading={busyAction === "PROGRESS"} disabled={busy} onClick={() => run("PROGRESS")}>บันทึกความคืบหน้า</Button>
+          )}
+          <Button className="w-full" variant="secondary" loading={busyAction === "COMMENT"} disabled={busy || !canComment} onClick={() => run("COMMENT")}>
+            <MessageSquare size={15} aria-hidden="true" /> บันทึกความคิดเห็น
+          </Button>
+          {isIT && !closed && (
+            <div className="space-y-1.5">
+              <label htmlFor="workflow-assignee" className="text-xs font-medium text-slate-600">มอบหมายผู้รับผิดชอบ</label>
+              <select id="workflow-assignee" value={assignee} onChange={(event) => setAssignee(event.target.value)} className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-slate-800 outline-none focus:border-brand focus:ring-2 focus:ring-brand/15">
+                <option value="">เลือกเจ้าหน้าที่...</option>
+                {itStaff.map((staff) => <option key={staff.id} value={staff.id}>{staff.displayName}</option>)}
+              </select>
+              <Button className="w-full" variant="secondary" loading={busyAction === "ASSIGN"} disabled={busy || !assignee} onClick={() => run("ASSIGN", { assignedToId: Number(assignee) })}>มอบหมายงาน</Button>
+            </div>
+          )}
+        </section>
+
+        {(isIT || isRequester) && (
+          <section aria-labelledby="case-actions-heading" className="space-y-2 border-t border-border pt-4">
+            <h3 id="case-actions-heading" className="text-xs font-semibold text-slate-500">ตัวเลือกคำร้อง</h3>
+            {isIT && !closed && <Button className="w-full" variant="secondary" loading={busyAction === "CLOSE"} disabled={busy} onClick={() => run("CLOSE")}>ปิดงานทันที</Button>}
+            {!closed && (
+              <Button className="w-full" variant="danger" loading={busyAction === "CANCEL"} disabled={busy} onClick={() => run("CANCEL")}>
+                <AlertTriangle size={15} aria-hidden="true" /> ยกเลิกคำร้อง
+              </Button>
+            )}
+            {closed && (
+              <Button className="w-full" variant="secondary" loading={busyAction === "REOPEN"} disabled={busy} onClick={() => run("REOPEN")}>
+                <RotateCcw size={15} aria-hidden="true" /> เปิดเรื่องอีกครั้ง
+              </Button>
+            )}
+          </section>
         )}
       </div>
-
-      {status === "CLOSED" && isRequester && !hasEvaluation && (
-        <Link href={`/evaluate/${ticketId}`} className={`${primary} block bg-amber-500 text-center hover:bg-amber-600`}>
-          ประเมินความพึงพอใจ
-        </Link>
-      )}
-      {hasEvaluation && <p className="text-center text-xs text-slate-400">ประเมินแล้ว ขอบคุณครับ</p>}
-    </div>
+    </section>
   );
+}
+
+function workflowCopy(status: string, itStatus: string, closed: boolean) {
+  if (status === "CANCELLED") return { title: "ยกเลิกคำร้องแล้ว", description: "คำร้องนี้หยุดดำเนินการ สามารถเปิดเรื่องอีกครั้งได้หากจำเป็น" };
+  if (closed) return { title: "ปิดงานแล้ว", description: "การดำเนินงานสิ้นสุดและบันทึกไว้ในประวัติเรียบร้อย" };
+  if (status === "RESOLVED") return { title: "รอยืนยันผล", description: "ดำเนินการเสร็จแล้ว รอผู้แจ้งตรวจสอบก่อนปิดงาน" };
+  if (itStatus === "NEW") return { title: "รอรับงาน", description: "คำร้องยังไม่ได้รับมอบหมายหรือเริ่มดำเนินการ" };
+  return { title: "กำลังดำเนินการ", description: "บันทึกความคืบหน้า หรือแจ้งเสร็จเมื่อแก้ไขเรียบร้อย" };
+}
+
+function approvalStepLabel(step: string) {
+  if (step === "CHECK") return "ผู้ตรวจสอบ";
+  if (step === "ACCOUNTING") return "ผู้ตรวจสอบบัญชี";
+  return "ผู้อนุมัติ";
 }

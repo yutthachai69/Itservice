@@ -1,17 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  /* Cool, faintly blue neutrals — same family as the login screen. */
+  /* Product palette: the original TUSM navy/blue with restrained cool neutrals. */
   --background: #f2f5fb;
   --foreground: #16202f;
   --card: #ffffff;
+  --surface-subtle: #f8fafc;
   --border: #e3e8ef;
   --border-strong: #ccd4e0;
   --brand: #175cd3;
   --brand-strong: #124aab;
   --brand-weak: #e9f1fd;
   --muted: #59647a;
-  /* app chrome: deep brand navy for the sidebar */
+  --success: #087a55;
+  --warning: #a15c07;
+  --danger: #c43232;
+  /* App chrome uses one deep navy; service categories do not introduce new brand colors. */
   --sidebar: #0f2a4f;
   --sidebar-line: #ffffff1a;
 }
@@ -20,15 +24,23 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --color-surface-subtle: var(--surface-subtle);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
   --color-brand-weak: var(--brand-weak);
   --color-muted: var(--muted);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
   --color-sidebar: var(--sidebar);
   --font-sans: var(--font-ui);
   --font-display: var(--font-itim);
+  /* docs/ui-foundation.md: default radius is 10px — retokenize rounded-md so
+     every control (buttons, badges, inputs, cards) shares one value instead
+     of scattering rounded-[10px] arbitrary values around the app. */
+  --radius-md: 0.625rem;
 }
 
 body {
@@ -37,6 +49,7 @@ body {
   font-family: var(--font-ui), "Segoe UI", Tahoma, sans-serif;
   font-size: 15px;
   line-height: 1.5;
+  font-feature-settings: "kern" 1, "liga" 1;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
 }
@@ -79,13 +92,12 @@ textarea::placeholder {
   height: 0;
 }
 
-/* Shared surface: soft card used across list/detail/dashboard views. */
+/* Shared work surface. Keep depth quiet so hierarchy comes from content, not decoration. */
 @utility card {
-  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   background: var(--card);
-  box-shadow:
-    0 1px 2px rgb(16 24 40 / 0.04),
-    0 0 0 1px var(--border);
+  box-shadow: 0 1px 2px rgb(15 42 79 / 0.04);
 }
 
 /* Login illustration: connected-sites network. */

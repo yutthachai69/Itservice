@@ -6,21 +6,21 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/25 focus-visible:ring-offset-2 " +
-  "active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60";
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md font-medium transition-colors " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-2 " +
+  "focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-55";
 
 const VARIANT: Record<Variant, string> = {
-  primary: "bg-brand text-white hover:bg-brand-strong",
-  secondary: "border border-border-strong text-slate-700 hover:bg-slate-50 hover:text-slate-900",
+  primary: "bg-brand text-white shadow-sm hover:bg-brand-strong",
+  secondary: "border border-border-strong bg-card text-slate-700 hover:border-slate-400 hover:bg-surface-subtle hover:text-slate-950",
   ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-  danger: "border border-red-300 text-red-700 hover:bg-red-50",
+  danger: "border border-red-300 bg-card text-red-700 hover:bg-red-50",
 };
 
 const SIZE: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-xs",
-  md: "px-4 py-2 text-sm",
-  lg: "px-5 py-2.5 text-sm",
+  sm: "h-8 px-3 text-xs",
+  md: "h-10 px-4 text-sm",
+  lg: "h-11 px-5 text-sm",
 };
 
 /** Shared class string — use when a plain <button>/<a>/<Link> is easier than the component. */
@@ -49,6 +49,7 @@ export function Button({
     <button
       className={buttonClass({ variant, size, className })}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...rest}
     >
       {loading && <Spinner />}
@@ -60,13 +61,23 @@ export function Button({
 export function ButtonLink({
   variant,
   size,
+  loading,
   className,
   children,
   href,
   ...rest
 }: CommonProps & { href: string } & Omit<React.ComponentProps<typeof Link>, "href" | "className">) {
   return (
-    <Link href={href} className={buttonClass({ variant, size, className })} {...rest}>
+    <Link
+      href={href}
+      className={buttonClass({
+        variant,
+        size,
+        className: cn(loading && "pointer-events-none opacity-55", className),
+      })}
+      aria-busy={loading || undefined}
+      {...rest}
+    >
       {children}
     </Link>
   );

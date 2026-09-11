@@ -1,17 +1,28 @@
+import type { LucideIcon } from "lucide-react";
+import Image from "next/image";
 import { getCurrentUser } from "@/lib/auth";
 import { FORM_DEFS } from "@/lib/form-defs";
 import { listFormFiles } from "@/lib/form-files";
+import { docThumb } from "@/lib/doc-thumbs";
+import { titleFor, REGENERATED, docUrls } from "@/lib/doc-meta";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
-import { Download, Eye, FileText } from "lucide-react";
+import {
+  DatabaseZap,
+  Download,
+  Eye,
+  FileText,
+  KeyRound,
+  Laptop,
+  MonitorCog,
+  PackageCheck,
+  ShieldCheck,
+  Video,
+} from "lucide-react";
 
-const EXTRA_TITLES: Record<string, string> = {
-  F01: "ทะเบียนประวัติเครื่องคอมพิวเตอร์",
-  F08: "แบบฟอร์ม F08",
-  F15: "แบบฟอร์ม F15",
-  F16: "แบบฟอร์ม F16",
-  ITR: "IT Request (ITR)",
-};
+// real names/descriptions not confirmed yet — flagged in the UI instead of
+// left blank so it's clear the card is incomplete, not broken
+const PLACEHOLDER_NAME = new Set(["F08", "F15", "F16"]);
 
 // one-line "ใช้สำหรับ…" per form
 const DESC: Record<string, string> = {
@@ -24,7 +35,17 @@ const DESC: Record<string, string> = {
   F12: "ขอเตรียมระบบประชุม/อบรมออนไลน์ (Teams / Zoom / Google Meet)",
 };
 
-const titleFor = (code: string) => FORM_DEFS[code]?.title ?? EXTRA_TITLES[code] ?? code;
+// docs/ui-foundation.md: category icons stay monochrome — same icon set as
+// the sidebar/home cards, but one brand tint instead of a color per form.
+const ICON: Record<string, LucideIcon> = {
+  F06: MonitorCog,
+  F11: KeyRound,
+  F10: ShieldCheck,
+  F03: Laptop,
+  F12: Video,
+  F07: DatabaseZap,
+  F02: PackageCheck,
+};
 
 function humanSize(n: number) {
   if (!n) return "";
@@ -73,59 +94,93 @@ function DocGroup({
 }) {
   return (
     <section>
-      <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">{heading}</h2>
-      <div className="card overflow-hidden">
+      <div className="mb-3 flex items-baseline gap-2">
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] text-muted uppercase">{heading}</h2>
+        <span className="text-[11px] text-slate-300">· {items.length} รายการ</span>
+      </div>
+      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((f) => {
-          const url = `/forms/${encodeURIComponent(f.file)}`;
+          const regenerated = REGENERATED.has(f.code);
+          // served through an API route (not the raw /forms/<thai filename>.pdf
+          // path) so the browser gets a proper RFC 5987 filename header instead
+          // of guessing one from a percent-encoded Thai URL — that guess is what
+          // was showing up as a garbled tab title. Forms with a broken source
+          // PDF go to a regenerated blank copy instead (see doc-meta.ts).
+          const { view: viewUrl, download: downloadUrl } = docUrls(f.code);
+          const Icon = ICON[f.code] ?? FileText;
+          const thumb = docThumb(f.code);
           return (
-            <div
-              key={f.file}
-              className="group flex items-start gap-3.5 border-b border-border p-4 transition last:border-b-0 hover:bg-brand-weak/30"
-            >
-              <a
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex min-w-0 flex-1 items-start gap-3.5"
-              >
-                <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-weak text-brand transition group-hover:bg-brand group-hover:text-white">
-                  <FileText size={20} strokeWidth={1.8} aria-hidden="true" />
+            <div key={f.file} className="card group relative flex items-start gap-3 p-4 transition hover:shadow-md">
+              {/* compact, equal-weight action cluster — avoids one loud button next to an empty-looking one */}
+              <div className="absolute top-3 right-3 flex gap-1">
+                <a
+                  href={viewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`ดูตัวอย่าง ${titleFor(f.code)}`}
+                  title="ดูตัวอย่าง"
+                  className="flex h-8 w-8 items-center justify-center rounded-md border border-border-strong text-slate-500 transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand"
+                >
+                  <Eye size={15} aria-hidden="true" />
+                </a>
+                <a
+                  href={downloadUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`ดาวน์โหลด ${titleFor(f.code)}`}
+                  title="ดาวน์โหลด"
+                  className="flex h-8 w-8 items-center justify-center rounded-md border border-border-strong text-slate-500 transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand"
+                >
+                  <Download size={15} aria-hidden="true" />
+                </a>
+              </div>
+
+              {thumb ? (
+                <span className="h-11 w-11 shrink-0 overflow-hidden rounded-md bg-slate-50 ring-1 ring-border">
+                  <Image src={thumb} alt="" width={44} height={44} className="h-full w-full object-cover" />
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <span className="rounded bg-brand/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-brand">
-                      {f.code}
-                    </span>
-                    {f.bytes > 0 && (
-                      <span className="text-[11px] text-slate-400">PDF · {humanSize(f.bytes)}</span>
-                    )}
+              ) : (
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-brand-weak text-brand">
+                  <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
+                </span>
+              )}
+
+              <a href={viewUrl} target="_blank" rel="noreferrer" className="group/link min-w-0 flex-1 pr-16">
+                <span className="block text-[0.95rem] leading-snug font-bold text-slate-900 group-hover/link:text-brand">
+                  {titleFor(f.code)}
+                </span>
+                {DESC[f.code] ? (
+                  <span className="mt-1 block text-xs leading-relaxed text-muted">{DESC[f.code]}</span>
+                ) : PLACEHOLDER_NAME.has(f.code) ? (
+                  <span className="mt-1 block text-xs leading-relaxed text-amber-600">
+                    ชื่อและรายละเอียดจริงยังไม่ยืนยัน — รอ IT ปรับปรุง
                   </span>
-                  <span className="mt-1 block text-sm font-medium text-slate-900">{titleFor(f.code)}</span>
-                  {DESC[f.code] && (
-                    <span className="mt-0.5 block text-xs leading-snug text-muted">{DESC[f.code]}</span>
+                ) : null}
+                {regenerated && (
+                  <span className="mt-1 block text-xs leading-relaxed text-slate-400">
+                    ไฟล์ต้นฉบับตัวอักษรซ้อนกัน — ใช้แบบฟอร์มเปล่าที่สร้างใหม่แทน
+                  </span>
+                )}
+                <span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="rounded bg-brand/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-brand">
+                    {f.code}
+                  </span>
+                  {regenerated ? (
+                    <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">
+                      สร้างใหม่จากระบบ
+                    </span>
+                  ) : (
+                    f.bytes > 0 && (
+                      <span className="text-[11px] text-slate-400">PDF · {humanSize(f.bytes)}</span>
+                    )
+                  )}
+                  {PLACEHOLDER_NAME.has(f.code) && (
+                    <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700">
+                      ชื่อชั่วคราว
+                    </span>
                   )}
                 </span>
               </a>
-
-              <div className="flex shrink-0 flex-col gap-1.5">
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border-strong px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand"
-                >
-                  <Eye size={14} aria-hidden="true" />
-                  ดู
-                </a>
-                <a
-                  href={url}
-                  download
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border-strong px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand"
-                >
-                  <Download size={14} aria-hidden="true" />
-                  โหลด
-                </a>
-              </div>
             </div>
           );
         })}

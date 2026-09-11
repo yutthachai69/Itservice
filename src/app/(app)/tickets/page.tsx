@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { SITES, siteName, isIT } from "@/lib/constants";
 import { FORM_LIST } from "@/lib/form-defs";
 import { StatusBadge, Pill } from "@/components/Badge";
+import { PageHeader } from "@/components/PageHeader";
 import { fmtDateTime } from "@/lib/ui";
 import { computeSla } from "@/lib/sla";
 
@@ -79,21 +80,20 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
-        <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand">ศูนย์คำร้อง</p>
-          <h1 className="font-display text-2xl text-slate-900">
-            รายการคำร้อง <span className="font-sans text-base font-normal text-slate-400">{total} รายการ</span>
-          </h1>
-          <p className="mt-1 text-sm text-muted">ค้นหา ติดตาม และดำเนินการกับคำร้องในระบบ</p>
-        </div>
-        <a
-          href={exportHref}
-          className="inline-flex h-10 items-center rounded-lg border border-border-strong px-3.5 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand"
-        >
-          ส่งออก Excel
-        </a>
-      </div>
+      <PageHeader
+        chip="ศูนย์คำร้อง"
+        title="รายการคำร้อง"
+        count={total}
+        subtitle="ค้นหา ติดตาม และดำเนินการกับคำร้องในระบบ"
+        actions={
+          <a
+            href={exportHref}
+            className="inline-flex h-10 items-center rounded-md border border-border-strong px-3.5 text-sm font-medium text-slate-700 transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand"
+          >
+            ส่งออก Excel
+          </a>
+        }
+      />
 
       <section className="card overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-slate-50/70 px-4 py-3">
@@ -117,7 +117,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1.45fr_1fr_1.35fr_auto]">
           <label className="flex flex-col gap-1 text-xs text-muted">
             <span className="font-medium text-slate-600">ประเภทฟอร์ม</span>
-            <select name="formType" defaultValue={formType} className="h-10 rounded-lg border border-border bg-card px-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15">
+            <select name="formType" defaultValue={formType} className="h-10 rounded-md border border-border bg-card px-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15">
               <option value="">ทุกประเภท</option>
               {FORM_LIST.map((f) => (
                 <option key={f.type} value={f.type}>
@@ -128,7 +128,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted">
             <span className="font-medium text-slate-600">สถานะ</span>
-            <select name="status" defaultValue={status} className="h-10 rounded-lg border border-border bg-card px-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15">
+            <select name="status" defaultValue={status} className="h-10 rounded-md border border-border bg-card px-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15">
               <optgroup label="กลุ่ม">
                 <option value="active">กำลังดำเนินการ (เปิด + รับงาน + รอปิด)</option>
                 <option value="closed">ปิดแล้ว / ยกเลิก</option>
@@ -145,7 +145,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted">
             <span className="font-medium text-slate-600">บริษัท</span>
-            <select name="site" defaultValue={site} className="h-10 rounded-lg border border-border bg-card px-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15">
+            <select name="site" defaultValue={site} className="h-10 rounded-md border border-border bg-card px-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15">
               <option value="">ทุกบริษัท</option>
               {SITES.map((s) => (
                 <option key={s.code} value={s.code}>
@@ -160,10 +160,10 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
               name="q"
               defaultValue={q}
               placeholder="เลขเอกสาร / ชื่อผู้ขอ"
-              className="h-10 rounded-lg border border-border bg-card px-2.5 text-sm text-foreground outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/15"
+              className="h-10 rounded-md border border-border bg-card px-2.5 text-sm text-foreground outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/15"
             />
           </label>
-          <button className="h-10 self-end rounded-lg bg-brand px-5 text-sm font-medium text-white transition hover:bg-brand-strong focus:outline-none focus:ring-2 focus:ring-brand/30 focus:ring-offset-2">
+          <button className="h-10 self-end rounded-md bg-brand px-5 text-sm font-medium text-white transition hover:bg-brand-strong focus:outline-none focus:ring-2 focus:ring-brand/30 focus:ring-offset-2">
             ค้นหา
           </button>
         </div>
@@ -312,8 +312,8 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
                 aria-current={p === page ? "page" : undefined}
                 className={
                   p === page
-                    ? "rounded-lg bg-brand px-3 py-1 font-medium text-white"
-                    : "rounded-lg border border-border px-3 py-1 text-slate-600 transition hover:bg-slate-50"
+                    ? "rounded-md bg-brand px-3 py-1 font-medium text-white"
+                    : "rounded-md border border-border px-3 py-1 text-slate-600 transition hover:bg-slate-50"
                 }
               >
                 {p}
@@ -330,10 +330,10 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
 
 function PageLink({ href, disabled, label }: { href: string; disabled: boolean; label: string }) {
   if (disabled) {
-    return <span className="rounded-lg border border-border px-3 py-1 text-slate-300">{label}</span>;
+    return <span className="rounded-md border border-border px-3 py-1 text-slate-300">{label}</span>;
   }
   return (
-    <Link href={href} className="rounded-lg border border-border px-3 py-1 text-slate-600 transition hover:bg-slate-50">
+    <Link href={href} className="rounded-md border border-border px-3 py-1 text-slate-600 transition hover:bg-slate-50">
       {label}
     </Link>
   );

@@ -98,7 +98,14 @@ function DocGroup({
         <h2 className="text-[11px] font-semibold tracking-[0.2em] text-muted uppercase">{heading}</h2>
         <span className="text-[11px] text-slate-300">· {items.length} รายการ</span>
       </div>
-      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+      {/* one bordered work surface for the whole group — docs/ui-foundation.md
+          "use a single bordered work surface for related content instead of
+          a card for every subsection". Classic grid-divider trick: the grid
+          itself is border-colored with a 1px gap, each cell paints over it
+          with the card background — draws hairline dividers between every
+          row and column with no fragile nth-child selectors. */}
+      <div className="card overflow-hidden">
+        <div className="grid gap-px bg-border sm:grid-cols-2 xl:grid-cols-3">
         {items.map((f) => {
           const regenerated = REGENERATED.has(f.code);
           // served through an API route (not the raw /forms/<thai filename>.pdf
@@ -110,7 +117,10 @@ function DocGroup({
           const Icon = ICON[f.code] ?? FileText;
           const thumb = docThumb(f.code);
           return (
-            <div key={f.file} className="card group relative flex items-start gap-3 p-4 transition hover:shadow-md">
+            <div
+              key={f.file}
+              className="group relative flex items-start gap-3 bg-card p-4 transition hover:bg-brand-weak/20"
+            >
               {/* compact, equal-weight action cluster — avoids one loud button next to an empty-looking one */}
               <div className="absolute top-3 right-3 flex gap-1">
                 <a
@@ -184,6 +194,7 @@ function DocGroup({
             </div>
           );
         })}
+        </div>
       </div>
     </section>
   );

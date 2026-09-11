@@ -2,23 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  DatabaseZap,
-  KeyRound,
-  Laptop,
-  MonitorCog,
-  ShieldCheck,
-  Video,
-} from "lucide-react";
+import { SERVICE_ICON } from "@/lib/doc-meta";
 import { cn } from "@/lib/ui";
 
 const SERVICES = [
-  { href: "/tickets/new/F06", label: "แจ้งปัญหา IT", icon: MonitorCog },
-  { href: "/tickets/new/F11", label: "แก้ไขรหัสผ่าน", icon: KeyRound },
-  { href: "/tickets/new/F10", label: "ขอสิทธิ์ใช้งานระบบ", icon: ShieldCheck },
-  { href: "/tickets/new/F03", label: "ขอยืมอุปกรณ์", icon: Laptop },
-  { href: "/tickets/new/F12", label: "ขอจัดประชุมออนไลน์", icon: Video },
-  { href: "/tickets/new/F07", label: "ขอแก้ไขข้อมูลระบบ", icon: DatabaseZap },
+  { code: "F06", href: "/tickets/new/F06", label: "แจ้งปัญหา IT" },
+  { code: "F11", href: "/tickets/new/F11", label: "แก้ไขรหัสผ่าน" },
+  { code: "F10", href: "/tickets/new/F10", label: "ขอสิทธิ์ใช้งานระบบ" },
+  { code: "F03", href: "/tickets/new/F03", label: "ขอยืมอุปกรณ์" },
+  { code: "F12", href: "/tickets/new/F12", label: "ขอจัดประชุมออนไลน์" },
+  { code: "F07", href: "/tickets/new/F07", label: "ขอแก้ไขข้อมูลระบบ" },
 ];
 
 export function ServiceNav() {
@@ -27,7 +20,7 @@ export function ServiceNav() {
   return (
     <nav aria-label="บริการ IT" className="space-y-0.5">
       {SERVICES.map((service) => {
-        const Icon = service.icon;
+        const Icon = SERVICE_ICON[service.code];
         const active = pathname === service.href;
 
         return (

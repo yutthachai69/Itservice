@@ -8,7 +8,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isIT, SITES, siteName } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { formPdfFile } from "@/lib/form-files";
-import { docUrls, DESC } from "@/lib/doc-meta";
+import { docUrls, DESC, SERVICE_ICON } from "@/lib/doc-meta";
 import { getFormDef } from "@/lib/form-defs";
 import { siteCodeFromHeaders } from "@/lib/site-detect";
 import { TicketForm } from "./TicketForm";
@@ -62,6 +62,7 @@ export default async function NewTicketPage({
       </Link>
 
       <PageHeader
+        icon={SERVICE_ICON[def.code]}
         chip={`${def.code} · เปิดคำร้องใหม่`}
         title={def.shortTitle}
         subtitle={DESC[def.code] ?? def.title}

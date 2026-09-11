@@ -1,40 +1,16 @@
-import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { getCurrentUser } from "@/lib/auth";
 import { FORM_DEFS } from "@/lib/form-defs";
 import { listFormFiles } from "@/lib/form-files";
 import { docThumb } from "@/lib/doc-thumbs";
-import { titleFor, DESC, REGENERATED, docUrls } from "@/lib/doc-meta";
+import { titleFor, DESC, SERVICE_ICON, REGENERATED, docUrls } from "@/lib/doc-meta";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
-import {
-  DatabaseZap,
-  Download,
-  Eye,
-  FileText,
-  KeyRound,
-  Laptop,
-  MonitorCog,
-  PackageCheck,
-  ShieldCheck,
-  Video,
-} from "lucide-react";
+import { Download, Eye, FileText } from "lucide-react";
 
 // real names/descriptions not confirmed yet — flagged in the UI instead of
 // left blank so it's clear the card is incomplete, not broken
 const PLACEHOLDER_NAME = new Set(["F08", "F15", "F16"]);
-
-// docs/ui-foundation.md: category icons stay monochrome — same icon set as
-// the sidebar/home cards, but one brand tint instead of a color per form.
-const ICON: Record<string, LucideIcon> = {
-  F06: MonitorCog,
-  F11: KeyRound,
-  F10: ShieldCheck,
-  F03: Laptop,
-  F12: Video,
-  F07: DatabaseZap,
-  F02: PackageCheck,
-};
 
 function humanSize(n: number) {
   if (!n) return "";
@@ -103,7 +79,7 @@ function DocGroup({
           // was showing up as a garbled tab title. Forms with a broken source
           // PDF go to a regenerated blank copy instead (see doc-meta.ts).
           const { view: viewUrl, download: downloadUrl } = docUrls(f.code);
-          const Icon = ICON[f.code] ?? FileText;
+          const Icon = SERVICE_ICON[f.code] ?? FileText;
           const thumb = docThumb(f.code);
           return (
             <div

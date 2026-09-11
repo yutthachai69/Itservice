@@ -1,3 +1,13 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  DatabaseZap,
+  KeyRound,
+  Laptop,
+  MonitorCog,
+  PackageCheck,
+  ShieldCheck,
+  Video,
+} from "lucide-react";
 import { FORM_DEFS } from "./form-defs";
 
 // Human titles for the downloadable form PDFs that aren't ticket types
@@ -24,6 +34,19 @@ export const DESC: Record<string, string> = {
   F10: "ขอเปิด/ยกเลิกสิทธิ์เข้าใช้งานระบบ IT (User, ไดรฟ์แชร์, เครื่องปริ้น…)",
   F11: "ขอเปลี่ยน/รีเซ็ตรหัสผ่านคอมพิวเตอร์ อีเมล หรือระบบงาน",
   F12: "ขอเตรียมระบบประชุม/อบรมออนไลน์ (Teams / Zoom / Google Meet)",
+};
+
+// same icon per form code everywhere it's shown (sidebar service list, home
+// cards, documents cards, ticket-form header) — one shared map instead of
+// four copies drifting apart.
+export const SERVICE_ICON: Record<string, LucideIcon> = {
+  F06: MonitorCog,
+  F11: KeyRound,
+  F10: ShieldCheck,
+  F03: Laptop,
+  F12: Video,
+  F07: DatabaseZap,
+  F02: PackageCheck,
 };
 
 // the uploaded PDFs for these codes have overlapping/broken text boxes baked

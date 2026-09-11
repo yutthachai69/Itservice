@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { FORM_DEFS } from "@/lib/form-defs";
 import { listFormFiles } from "@/lib/form-files";
 import { docThumb } from "@/lib/doc-thumbs";
-import { titleFor, REGENERATED, docUrls } from "@/lib/doc-meta";
+import { titleFor, DESC, REGENERATED, docUrls } from "@/lib/doc-meta";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import {
@@ -23,17 +23,6 @@ import {
 // real names/descriptions not confirmed yet — flagged in the UI instead of
 // left blank so it's clear the card is incomplete, not broken
 const PLACEHOLDER_NAME = new Set(["F08", "F15", "F16"]);
-
-// one-line "ใช้สำหรับ…" per form
-const DESC: Record<string, string> = {
-  F02: "บันทึกการส่งมอบเครื่องคอมพิวเตอร์ให้ผู้รับ",
-  F03: "ยืมโน้ตบุ๊ก โปรเจกเตอร์ จอ หรืออุปกรณ์เสริมชั่วคราว",
-  F06: "แจ้งปัญหาคอมพิวเตอร์ โปรแกรม เครือข่าย หรือขอรับบริการ IT",
-  F07: "ขอแก้ไข/เปลี่ยนแปลงข้อมูลในระบบงาน (ERP Softpro ฯลฯ)",
-  F10: "ขอเปิด/ยกเลิกสิทธิ์เข้าใช้งานระบบ IT (User, ไดรฟ์แชร์, เครื่องปริ้น…)",
-  F11: "ขอเปลี่ยน/รีเซ็ตรหัสผ่านคอมพิวเตอร์ อีเมล หรือระบบงาน",
-  F12: "ขอเตรียมระบบประชุม/อบรมออนไลน์ (Teams / Zoom / Google Meet)",
-};
 
 // docs/ui-foundation.md: category icons stay monochrome — same icon set as
 // the sidebar/home cards, but one brand tint instead of a color per form.

@@ -4,17 +4,11 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { siteName, isIT } from "@/lib/constants";
 import { AppNav } from "./AppNav";
+import { ServiceNav } from "./ServiceNav";
 import { NavProgress } from "./NavProgress";
 import { RememberSite } from "./RememberSite";
 import { ToastProvider } from "@/components/Toast";
-import {
-  DatabaseZap,
-  KeyRound,
-  Laptop,
-  MonitorCog,
-  ShieldCheck,
-  Video,
-} from "lucide-react";
+import { buttonClass } from "@/components/Button";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -41,19 +35,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       : []),
     ...(user.role === "ADMIN" ? [{ href: "/admin/users", label: "จัดการสิทธิ์" }] : []),
   ];
-  const services = [
-    { href: "/tickets/new/F06", label: "แจ้งปัญหา IT", icon: MonitorCog, tint: "bg-blue-50 text-blue-600" },
-    { href: "/tickets/new/F11", label: "แก้ไขรหัสผ่าน", icon: KeyRound, tint: "bg-emerald-50 text-emerald-600" },
-    { href: "/tickets/new/F10", label: "ขอสิทธิ์ใช้งานระบบ", icon: ShieldCheck, tint: "bg-violet-50 text-violet-600" },
-    { href: "/tickets/new/F03", label: "ขอยืมอุปกรณ์", icon: Laptop, tint: "bg-amber-50 text-amber-600" },
-    { href: "/tickets/new/F12", label: "ขอจัดประชุมออนไลน์", icon: Video, tint: "bg-rose-50 text-rose-600" },
-    { href: "/tickets/new/F07", label: "ขอแก้ไขข้อมูลระบบ", icon: DatabaseZap, tint: "bg-teal-50 text-teal-600" },
-  ];
-
   return (
     <div className="min-w-0 flex-1">
       <NavProgress />
-      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[260px] overflow-y-auto border-r border-border bg-card lg:flex lg:flex-col">
+      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[248px] overflow-y-auto border-r border-border bg-card lg:flex lg:flex-col">
         <Link href="/" className="flex h-16 items-center gap-3 border-b border-border px-5 text-lg font-bold text-slate-900">
           <Image
             src="/TSM.png"
@@ -72,29 +57,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         <div className="border-t border-border px-3 py-5">
           <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">บริการ</p>
-          <nav className="space-y-0.5">
-            {services.map((service) => {
-              const Icon = service.icon;
-              return (
-                <Link
-                  key={service.href}
-                  href={service.href}
-                  className="group flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
-                >
-                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${service.tint}`}>
-                    <Icon size={15} strokeWidth={1.9} aria-hidden="true" />
-                  </span>
-                  <span>{service.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+          <ServiceNav />
         </div>
 
         <p className="mt-auto px-5 pb-5 pt-3 text-[11px] text-slate-400">{siteName(user.siteCode ?? "")} · IT Service Desk</p>
       </aside>
 
-      <div className="min-w-0 lg:ml-[260px]">
+      <div className="min-w-0 lg:ml-[248px]">
         <header className="no-print sticky top-0 z-30 border-b border-border bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
           <div className="flex h-16 w-full items-center gap-4 px-4 sm:px-6 xl:px-8">
             <Link href="/" className="flex items-center gap-2 font-semibold text-slate-900 lg:hidden">
@@ -121,9 +90,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 </div>
               </div>
               <form action="/api/auth/logout" method="post">
-                <button className="rounded-lg border border-border-strong px-3 py-1.5 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900">
-                  ออกจากระบบ
-                </button>
+                <button className={buttonClass({ variant: "secondary", size: "sm" })}>ออกจากระบบ</button>
               </form>
             </div>
           </div>

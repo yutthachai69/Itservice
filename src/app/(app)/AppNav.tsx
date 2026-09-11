@@ -24,7 +24,7 @@ export function AppNav({
           aria-current={active(l.href) ? "page" : undefined}
           className={cn(
             variant === "sidebar"
-              ? "flex items-center rounded-lg border-l-2 py-2.5 pr-3 pl-2.5 text-sm transition-colors"
+              ? "flex items-center rounded-md border-l-2 py-2.5 pr-3 pl-2.5 text-sm transition-colors"
               : "flex h-11 shrink-0 items-center border-b-2 px-0.5 transition-colors",
             variant === "sidebar"
               ? active(l.href)

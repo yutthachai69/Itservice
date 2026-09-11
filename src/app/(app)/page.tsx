@@ -24,17 +24,19 @@ import Image from "next/image";
 import { fmtDateTime, cn } from "@/lib/ui";
 import { EmptyInboxArt } from "./HomeArt";
 
+// docs/ui-foundation.md: category icons stay monochrome — one brand tint for
+// every service card instead of a color per form type.
 const SERVICE_META: Record<
   string,
-  { title: string; description: string; icon: LucideIcon; tint: string }
+  { title: string; description: string; icon: LucideIcon }
 > = {
-  F06: { title: "แจ้งปัญหา IT", description: "คอมพิวเตอร์ โปรแกรม อินเทอร์เน็ต หรืออุปกรณ์มีปัญหา", icon: MonitorCog, tint: "bg-blue-50 text-blue-600" },
-  F11: { title: "แก้ไขรหัสผ่าน", description: "รีเซ็ตรหัสผ่านคอมพิวเตอร์ อีเมล หรือระบบงาน", icon: KeyRound, tint: "bg-emerald-50 text-emerald-600" },
-  F10: { title: "ขอสิทธิ์ใช้งานระบบ", description: "เพิ่ม เปลี่ยน หรือยกเลิกสิทธิ์ระบบ", icon: ShieldCheck, tint: "bg-violet-50 text-violet-600" },
-  F03: { title: "ขอยืมอุปกรณ์", description: "โน้ตบุ๊ก โปรเจกเตอร์ จอมอนิเตอร์ และอุปกรณ์เสริม", icon: Laptop, tint: "bg-amber-50 text-amber-600" },
-  F12: { title: "ขอจัดประชุมออนไลน์", description: "เตรียมระบบ Video Conference สำหรับประชุมหรืออบรม", icon: Video, tint: "bg-rose-50 text-rose-600" },
-  F07: { title: "ขอแก้ไขข้อมูลในระบบ", description: "เปลี่ยนแปลงข้อมูลในระบบงานที่ใช้อยู่", icon: DatabaseZap, tint: "bg-teal-50 text-teal-600" },
-  F02: { title: "ส่งมอบคอมพิวเตอร์", description: "บันทึกการส่งมอบอุปกรณ์ให้ผู้รับ", icon: PackageCheck, tint: "bg-slate-100 text-slate-600" },
+  F06: { title: "แจ้งปัญหา IT", description: "คอมพิวเตอร์ โปรแกรม อินเทอร์เน็ต หรืออุปกรณ์มีปัญหา", icon: MonitorCog },
+  F11: { title: "แก้ไขรหัสผ่าน", description: "รีเซ็ตรหัสผ่านคอมพิวเตอร์ อีเมล หรือระบบงาน", icon: KeyRound },
+  F10: { title: "ขอสิทธิ์ใช้งานระบบ", description: "เพิ่ม เปลี่ยน หรือยกเลิกสิทธิ์ระบบ", icon: ShieldCheck },
+  F03: { title: "ขอยืมอุปกรณ์", description: "โน้ตบุ๊ก โปรเจกเตอร์ จอมอนิเตอร์ และอุปกรณ์เสริม", icon: Laptop },
+  F12: { title: "ขอจัดประชุมออนไลน์", description: "เตรียมระบบ Video Conference สำหรับประชุมหรืออบรม", icon: Video },
+  F07: { title: "ขอแก้ไขข้อมูลในระบบ", description: "เปลี่ยนแปลงข้อมูลในระบบงานที่ใช้อยู่", icon: DatabaseZap },
+  F02: { title: "ส่งมอบคอมพิวเตอร์", description: "บันทึกการส่งมอบอุปกรณ์ให้ผู้รับ", icon: PackageCheck },
 };
 
 const SERVICE_ORDER = ["F06", "F11", "F10", "F03", "F12", "F07"];
@@ -174,11 +176,11 @@ export default async function HomePage() {
                 )}
               >
                 {featured && (
-                  <span className="absolute right-3 top-3 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">
+                  <span className="absolute top-3 right-3 rounded-md bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">
                     ใช้งานบ่อย
                   </span>
                 )}
-                <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl", meta.tint)}>
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-brand-weak text-brand">
                   <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">

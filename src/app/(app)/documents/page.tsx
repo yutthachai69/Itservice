@@ -6,6 +6,7 @@ import { docThumb } from "@/lib/doc-thumbs";
 import { titleFor, DESC, SERVICE_ICON, REGENERATED, docUrls } from "@/lib/doc-meta";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { Button, ButtonLink } from "@/components/Button";
 import { Download, Eye, FileText } from "lucide-react";
 
 // real names/descriptions not confirmed yet — flagged in the UI instead of
@@ -18,14 +19,24 @@ function humanSize(n: number) {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export default async function DocumentsPage() {
+type SP = Record<string, string | undefined>;
+
+export default async function DocumentsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const user = await getCurrentUser();
   if (!user) return null;
 
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim();
   const files = listFormFiles();
   const appCodes = new Set(Object.keys(FORM_DEFS));
-  const forms = files.filter((f) => appCodes.has(f.code));
-  const others = files.filter((f) => !appCodes.has(f.code));
+  const filteredFiles = q
+    ? files.filter((file) => {
+        const haystack = [file.code, titleFor(file.code), DESC[file.code] ?? ""].join(" ").toLocaleLowerCase();
+        return haystack.includes(q.toLocaleLowerCase());
+      })
+    : files;
+  const forms = filteredFiles.filter((f) => appCodes.has(f.code));
+  const others = filteredFiles.filter((f) => !appCodes.has(f.code));
 
   return (
     <div className="space-y-8">
@@ -34,11 +45,39 @@ export default async function DocumentsPage() {
         subtitle="ดาวน์โหลดแบบฟอร์มกระดาษ (PDF) สำหรับกรอกด้วยมือหรือขอลายเซ็น"
       />
 
+      <form method="get" className="card flex flex-col gap-3 p-4 text-sm shadow-sm sm:flex-row sm:items-end">
+        <label htmlFor="document-search" className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-600">
+          ค้นหาเอกสาร
+          <input
+            id="document-search"
+            name="q"
+            defaultValue={q}
+            placeholder="ค้นหาจากรหัสหรือชื่อแบบฟอร์ม"
+            className="control w-full px-3"
+          />
+        </label>
+        <Button type="submit" className="w-full sm:w-auto">ค้นหา</Button>
+        {q && <ButtonLink href="/documents" variant="secondary" size="md" className="w-full sm:w-auto">ล้างตัวกรอง</ButtonLink>}
+      </form>
+
+      {files.length > 0 && (
+        <p role="status" aria-live="polite" className="text-xs text-muted">
+          แสดง <span className="font-semibold tabular-nums text-slate-700">{filteredFiles.length}</span> จาก {files.length} เอกสาร{q ? ` · ค้นหา “${q}”` : ""}
+        </p>
+      )}
+
       {files.length === 0 ? (
         <EmptyState
           icon={FileText}
           title="ยังไม่มีเอกสารให้ดาวน์โหลด"
           hint="ให้ IT วางไฟล์ PDF ไว้ที่ public/forms/"
+        />
+      ) : filteredFiles.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title="ไม่พบเอกสารที่ตรงกับคำค้น"
+          hint="ลองค้นด้วยรหัส F02, F03 หรือชื่อบริการ แล้วลองอีกครั้ง"
+          cta={{ href: "/documents", label: "ล้างตัวกรอง" }}
         />
       ) : (
         <div className="space-y-9">
@@ -61,7 +100,7 @@ function DocGroup({
     <section>
       <div className="mb-3 flex items-baseline gap-2">
         <h2 className="text-[11px] font-semibold tracking-[0.2em] text-muted uppercase">{heading}</h2>
-        <span className="text-[11px] text-slate-300">· {items.length} รายการ</span>
+        <span className="text-[11px] text-muted">· {items.length} รายการ</span>
       </div>
       {/* one bordered work surface for the whole group — docs/ui-foundation.md
           "use a single bordered work surface for related content instead of
@@ -87,26 +126,27 @@ function DocGroup({
               className="group relative flex items-start gap-3 bg-card p-4 transition hover:bg-brand-weak/20"
             >
               {/* compact, equal-weight action cluster — avoids one loud button next to an empty-looking one */}
-              <div className="absolute top-3 right-3 flex gap-1">
+              <div className="absolute top-3 right-3 z-10 flex gap-1">
                 <a
                   href={viewUrl}
                   target="_blank"
                   rel="noreferrer"
-                  aria-label={`ดูตัวอย่าง ${titleFor(f.code)}`}
+                  aria-label={`ดูตัวอย่าง ${titleFor(f.code)} (เปิดแท็บใหม่)`}
                   title="ดูตัวอย่าง"
-                  className="flex h-8 w-8 items-center justify-center rounded-md border border-border-strong text-slate-500 transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand"
+                  className="flex h-8 items-center justify-center gap-1 rounded-md border border-border-strong px-2 text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
                 >
                   <Eye size={15} aria-hidden="true" />
+                  <span className="hidden text-xs xl:inline">ดู</span>
                 </a>
                 <a
                   href={downloadUrl}
-                  target="_blank"
-                  rel="noreferrer"
+                  download
                   aria-label={`ดาวน์โหลด ${titleFor(f.code)}`}
                   title="ดาวน์โหลด"
-                  className="flex h-8 w-8 items-center justify-center rounded-md border border-border-strong text-slate-500 transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand"
+                  className="flex h-8 items-center justify-center gap-1 rounded-md border border-border-strong px-2 text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
                 >
                   <Download size={15} aria-hidden="true" />
+                  <span className="hidden text-xs xl:inline">ดาวน์โหลด</span>
                 </a>
               </div>
 
@@ -120,7 +160,7 @@ function DocGroup({
                 </span>
               )}
 
-              <a href={viewUrl} target="_blank" rel="noreferrer" className="group/link min-w-0 flex-1 pr-16">
+              <a href={viewUrl} target="_blank" rel="noreferrer" aria-label={`เปิดเอกสาร ${titleFor(f.code)} (เปิดแท็บใหม่)`} className="group/link min-w-0 flex-1 rounded-sm pr-16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1 xl:pr-28">
                 <span className="block text-[0.95rem] leading-snug font-bold text-slate-900 group-hover/link:text-brand">
                   {titleFor(f.code)}
                 </span>
@@ -141,7 +181,7 @@ function DocGroup({
                     {f.code}
                   </span>
                   {regenerated ? (
-                    <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">
+                    <span className="rounded bg-brand-weak px-1.5 py-0.5 text-[11px] font-medium text-brand">
                       สร้างใหม่จากระบบ
                     </span>
                   ) : (

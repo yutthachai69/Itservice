@@ -13,11 +13,12 @@ import { FORM_LIST } from "@/lib/form-defs";
 import { SERVICE_ICON } from "@/lib/doc-meta";
 import { isIT } from "@/lib/constants";
 import { computeSla } from "@/lib/sla";
-import { StatusBadge } from "@/components/Badge";
+import { Pill, StatusBadge } from "@/components/Badge";
 import { Card, CardHeader } from "@/components/Card";
 import Image from "next/image";
 import { fmtDateTime, cn } from "@/lib/ui";
 import { EmptyInboxArt } from "./HomeArt";
+import { ButtonLink } from "@/components/Button";
 
 // docs/ui-foundation.md: category icons stay monochrome — one brand tint for
 // every service card instead of a color per form type. Icon comes from the
@@ -51,14 +52,14 @@ export default async function HomePage() {
       : Promise.resolve([]),
     it
       ? prisma.ticket.findMany({
-          where: { itStatus: "NEW", status: { not: "CANCELLED" } },
+          where: { itStatus: "NEW", status: { notIn: ["CLOSED", "CANCELLED"] } },
           orderBy: { createdAt: "asc" },
           take: 6,
         })
       : Promise.resolve([]),
     it
       ? prisma.ticket.findMany({
-          where: { itStatus: "NEW", status: { not: "CANCELLED" } },
+          where: { itStatus: "NEW", status: { notIn: ["CLOSED", "CANCELLED"] } },
           select: { id: true, slaDueAt: true, itStatus: true },
         })
       : Promise.resolve([]),
@@ -79,12 +80,12 @@ export default async function HomePage() {
   return (
     <div className="relative space-y-8">
       {/* ── hero ── */}
-      <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-brand-weak via-white to-white p-6 sm:p-8">
+      <section className="relative overflow-hidden rounded-md border border-border bg-gradient-to-br from-brand-weak via-white to-white p-6 sm:p-8">
         <div className="relative z-10 grid items-center gap-6 lg:grid-cols-[1fr_minmax(0,440px)]">
           <div className="max-w-xl">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand">ยินดีต้อนรับกลับ</p>
-            <h1 className="mt-2 font-display text-[26px] leading-tight tracking-tight text-slate-900 sm:text-[32px]">
-              สวัสดี {firstName} <span className="align-middle">👋</span>
+            <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-tight text-slate-900 sm:text-[32px]">
+              สวัสดี {firstName}
             </h1>
             <p className="mt-1 text-lg font-semibold text-slate-700 sm:text-xl">
               วันนี้ต้องการให้ IT ช่วยเรื่องอะไร?
@@ -94,7 +95,7 @@ export default async function HomePage() {
             </p>
             <Link
               href="/tickets?mine=1"
-              className="mt-5 inline-flex items-center gap-3 card px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="mt-5 inline-flex items-center gap-3 rounded-md card px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-weak text-brand">
                 <ListChecks size={18} aria-hidden="true" />
@@ -113,7 +114,7 @@ export default async function HomePage() {
             width={1680}
             height={945}
             priority
-            className="hidden w-full rounded-xl lg:block"
+            className="hidden w-full rounded-md lg:block"
           />
         </div>
       </section>
@@ -155,7 +156,7 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="overflow-hidden rounded-md border border-border bg-card">
           {services.map((form) => {
             const meta = SERVICE_META[form.type];
             const Icon = SERVICE_ICON[form.type];
@@ -165,25 +166,32 @@ export default async function HomePage() {
                 key={form.type}
                 href={`/tickets/new/${form.type}`}
                 className={cn(
-                  "group relative flex items-start gap-3.5 card p-4 transition hover:-translate-y-0.5 hover:shadow-md",
-                  featured ? "border-brand/40 ring-1 ring-brand/25" : "border-border hover:border-brand/30",
+                  "group relative flex items-center gap-3.5 rounded-sm border-b border-border p-4 transition-colors last:border-b-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/35 sm:px-5",
+                  featured ? "bg-brand text-white hover:bg-brand-strong" : "hover:bg-brand-weak/25",
                 )}
               >
                 {featured && (
-                  <span className="absolute top-3 right-3 rounded-md bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">
+                  <span className="absolute top-3 right-4 rounded-md bg-white/15 px-2 py-0.5 text-[10px] font-semibold text-white/90">
                     ใช้งานบ่อย
                   </span>
                 )}
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-brand-weak text-brand">
+                <span className={cn(
+                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-md",
+                  featured ? "bg-white/15 text-white" : "bg-brand-weak text-brand",
+                )}>
                   <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold text-slate-900">{meta.title}</span>
-                  <span className="mt-0.5 block text-xs leading-relaxed text-muted">{meta.description}</span>
+                  <span className={cn("block text-sm font-semibold", featured ? "text-white" : "text-slate-900")}>{meta.title}</span>
+                  <span className={cn("mt-0.5 block text-xs leading-relaxed", featured ? "text-white/75" : "text-muted")}>{meta.description}</span>
                 </span>
+                <span className={cn("shrink-0 font-mono text-[11px]", featured ? "text-white/70" : "text-slate-400")}>{form.code}</span>
                 <ArrowRight
                   size={16}
-                  className="mt-0.5 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-brand"
+                  className={cn(
+                    "shrink-0 transition group-hover:translate-x-0.5",
+                    featured ? "text-white/75" : "text-slate-300 group-hover:text-brand",
+                  )}
                   aria-hidden="true"
                 />
               </Link>
@@ -199,7 +207,7 @@ export default async function HomePage() {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <h2 id="recent-heading" className="text-lg font-bold text-slate-900">คำร้องล่าสุดของฉัน</h2>
-              <Link href="/tickets?mine=1" className="text-sm font-medium text-brand hover:underline">ดูทั้งหมด</Link>
+              <Link href="/tickets?mine=1" className="rounded-sm text-sm font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2">ดูทั้งหมด</Link>
             </div>
             <p className="mt-0.5 text-sm text-muted">ติดตามสถานะงานที่คุณแจ้งไว้</p>
           </div>
@@ -211,12 +219,13 @@ export default async function HomePage() {
               <EmptyInboxArt className="h-24 w-auto" />
               <p className="mt-3 text-sm font-semibold text-slate-700">ยังไม่มีคำร้อง</p>
               <p className="mt-1 text-xs text-muted">เมื่อแจ้งปัญหาหรือขอรับบริการ รายการจะปรากฏที่นี่</p>
-              <Link
+              <ButtonLink
                 href="/tickets/new/F06"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-strong active:scale-[0.98]"
+                size="md"
+                className="mt-4"
               >
                 + สร้างคำร้องใหม่
-              </Link>
+              </ButtonLink>
             </div>
           ) : (
             <TicketMiniList tickets={mine} empty="" flush={false} />
@@ -231,13 +240,14 @@ export default async function HomePage() {
             description="งานที่รับผิดชอบและคำร้องใหม่ที่รอรับ"
             action={
               handover ? (
-                <Link
+                <ButtonLink
                   href={`/tickets/new/${handover.type}`}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border-strong px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                  variant="secondary"
+                  size="sm"
                 >
                   <PackageCheck size={16} aria-hidden="true" />
                   บันทึกส่งมอบคอมพิวเตอร์
-                </Link>
+                </ButtonLink>
               ) : undefined
             }
           />
@@ -245,14 +255,14 @@ export default async function HomePage() {
             <div className="p-5">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-700">งานที่มอบหมายให้ฉัน</h3>
-                <Link href="/tickets?assignee=me" className="text-xs font-medium text-brand hover:underline">ดูทั้งหมด</Link>
+                <Link href="/tickets?assignee=me" className="rounded-sm text-xs font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2">ดูทั้งหมด</Link>
               </div>
               <TicketMiniList tickets={myQueue} empty="ไม่มีงานที่มอบหมายให้คุณ" flush />
             </div>
             <div className="border-t border-border p-5 lg:border-t-0">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-700">คำร้องใหม่ที่ยังไม่มีผู้รับ</h3>
-                <Link href="/tickets?status=open" className="text-xs font-medium text-brand hover:underline">ดูทั้งหมด</Link>
+                <Link href="/tickets?status=open" className="rounded-sm text-xs font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2">ดูทั้งหมด</Link>
               </div>
               <TicketMiniList tickets={newQueue} empty="ไม่มีงานค้างในคิว" flush />
             </div>
@@ -281,14 +291,14 @@ function StatCard({
   const t = {
     blue: { bar: "bg-brand", chip: "bg-brand-weak text-brand", num: "text-slate-900" },
     red: { bar: "bg-red-500", chip: "bg-red-100 text-red-600", num: "text-red-600" },
-    slate: { bar: "bg-slate-300", chip: "bg-slate-100 text-slate-500", num: "text-slate-900" },
+    slate: { bar: "bg-slate-300", chip: "bg-slate-100 text-muted", num: "text-slate-900" },
   }[tone];
 
   return (
     <Link
       href={href}
       className={cn(
-        "group relative flex items-center gap-3.5 overflow-hidden rounded-xl border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        "group relative flex items-center gap-3.5 overflow-hidden rounded-md border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2",
         alert ? "border-red-200 ring-1 ring-red-100" : "border-border hover:border-brand/40",
       )}
     >
@@ -314,13 +324,17 @@ function TicketMiniList({
   empty,
   flush,
 }: {
-  tickets: { id: number; docNo: string; formType: string; userStatus: string; status: string; createdAt: Date }[];
+  tickets: { id: number; docNo: string; formType: string; userStatus: string; status: string; itStatus: string; slaDueAt: Date | null; createdAt: Date }[];
   empty: string;
   flush?: boolean;
 }) {
   if (tickets.length === 0) {
     return (
-      <div className={cn("flex flex-col items-center gap-1 text-center text-slate-400", flush ? "py-8" : "px-5 py-12")}>
+      <div
+        role="status"
+        aria-live="polite"
+        className={cn("flex flex-col items-center gap-1 text-center text-slate-400", flush ? "py-8" : "px-5 py-12")}
+      >
         <Inbox size={22} strokeWidth={1.6} aria-hidden="true" />
         <p className="text-sm">{empty}</p>
       </div>
@@ -328,21 +342,26 @@ function TicketMiniList({
   }
 
   return (
-    <ul className={cn("divide-y divide-border", !flush && "border-t border-border")}>
-      {tickets.map((ticket) => (
-        <li key={ticket.id}>
+    <ul aria-label="รายการคำร้อง" className={cn("divide-y divide-border", !flush && "border-t border-border")}>
+      {tickets.map((ticket) => {
+        const sla = computeSla({ slaDueAt: ticket.slaDueAt, itStatus: ticket.itStatus });
+        return (
+        <li key={ticket.id} className={sla.overdue ? "border-l-2 border-red-400 bg-red-50/25" : undefined}>
           <Link
             href={`/tickets/${ticket.id}`}
-            className={cn("flex items-center gap-3 py-3 transition hover:bg-slate-50", flush ? "px-1" : "px-5")}
+            aria-label={`เปิดคำร้อง ${ticket.docNo}: ${ticket.userStatus}`}
+            className={cn("flex items-center gap-3 rounded-sm py-3 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/35", flush ? "px-1" : "px-5")}
           >
             <span className="font-mono text-xs text-slate-400">{ticket.docNo}</span>
-            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500">{ticket.formType}</span>
-            <span className="min-w-0 flex-1 truncate text-sm text-slate-700">{ticket.userStatus}</span>
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-muted">{ticket.formType}</span>
+            <span className="min-w-0 flex-1 line-clamp-2 break-words text-sm leading-5 text-slate-700" title={ticket.userStatus}>{ticket.userStatus}</span>
             <span className="hidden text-xs text-slate-400 xl:inline">{fmtDateTime(ticket.createdAt)}</span>
+            {sla.overdue && <Pill tone="red">{sla.text}</Pill>}
             <StatusBadge status={ticket.status} />
           </Link>
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }

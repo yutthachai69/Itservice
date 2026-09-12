@@ -1,6 +1,19 @@
 import { prisma } from "./db";
 import type { SessionUser } from "./auth";
 
+/**
+ * Items due back "today" (BOOKED/ONLOAN, dueDate = today) stop blocking new
+ * bookings from this hour of the day onward — gives IT a return/check/re-issue
+ * buffer instead of advertising the item as free the instant it's nominally due.
+ * Doesn't affect overdue items (dueDate before today) — those stay blocked
+ * until actually logged as returned.
+ */
+const SAME_DAY_READY_HOUR = 15; // 15:00 local time
+
+function isSameCalendarDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
 /** items of `category` that are AVAILABLE and free of any BOOKED/ONLOAN overlapping [from,to] */
 export async function availableItems(opts: {
   category: string;
@@ -9,6 +22,7 @@ export async function availableItems(opts: {
   siteCode?: string;
   excludeLoanId?: number;
 }) {
+  const now = new Date();
   const busy = await prisma.loan.findMany({
     where: {
       status: { in: ["BOOKED", "ONLOAN"] },
@@ -16,9 +30,17 @@ export async function availableItems(opts: {
       dueDate: { gte: opts.from },
       ...(opts.excludeLoanId ? { id: { not: opts.excludeLoanId } } : {}),
     },
-    select: { itemId: true },
+    select: { itemId: true, dueDate: true },
   });
-  const busyIds = new Set(busy.map((b) => b.itemId));
+  const busyIds = new Set(
+    busy
+      .filter((b) => {
+        const dueToday = isSameCalendarDay(b.dueDate, now);
+        const pastBuffer = dueToday && now.getHours() >= SAME_DAY_READY_HOUR;
+        return !pastBuffer; // still counts as busy unless it's past today's return buffer
+      })
+      .map((b) => b.itemId),
+  );
 
   const items = await prisma.loanItem.findMany({
     where: {
@@ -104,12 +126,13 @@ export async function lendItem(opts: { ticketId: number; itemId: number; actor: 
 }
 
 /** active loans past their due date */
-export async function overdueLoans() {
+export async function overdueLoans(siteCode?: string) {
   return prisma.loan.findMany({
     where: {
       status: { in: ["BOOKED", "ONLOAN"] },
       returnedAt: null,
       dueDate: { lt: new Date() },
+      ...(siteCode ? { ticket: { siteCode } } : {}),
     },
     include: { item: true, ticket: { select: { id: true, docNo: true } } },
     orderBy: { dueDate: "asc" },
@@ -124,8 +147,12 @@ export async function extendLoan(opts: { loanId: number; actor: SessionUser; due
     return { ok: false as const, error: "การยืมนี้ไม่ได้อยู่ระหว่างยืม" };
 
   const newDue = new Date(opts.dueDate);
-  if (Number.isNaN(newDue.getTime()) || newDue < loan.borrowDate)
+  const now = new Date();
+  const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(opts.dueDate) || Number.isNaN(newDue.getTime()) || newDue < loan.borrowDate)
     return { ok: false as const, error: "วันคืนใหม่ไม่ถูกต้อง" };
+  if (opts.dueDate < todayKey)
+    return { ok: false as const, error: "วันคืนใหม่ต้องไม่ย้อนหลัง" };
 
   const clash = await prisma.loan.findFirst({
     where: {

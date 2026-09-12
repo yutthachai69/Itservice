@@ -5,7 +5,8 @@ these rules before introducing a new pattern.
 
 ## Brand and color
 
-- Navy (`--sidebar`) is reserved for one primary focal area per screen, not the whole navigation rail.
+- Navy (`--sidebar`) anchors the application chrome and can be reused for one primary focal area
+  per screen; semantic colors remain reserved for state, not decoration.
 - Brand blue (`--brand`) identifies links, focus, active navigation, and the primary action.
 - Cool gray surfaces organize information without adding a second visual theme.
 - Amber means waiting or attention, green means completed, red means error/destructive, and gray
@@ -14,9 +15,10 @@ these rules before introducing a new pattern.
 
 ## Typography
 
-- IBM Plex Sans Thai is the interface font for headings, forms, tables, navigation, and data.
-- Itim is reserved for a deliberately expressive surface such as the login or home introduction.
-- Operational page titles use semibold UI text, not the display font.
+- IBM Plex Sans Thai is the interface font for headings, forms, tables, navigation, data, and
+  the login/home introduction. Keeping one family across the product makes Thai text easier to
+  scan and avoids a disconnected display treatment.
+- Operational page titles use semibold UI text.
 - Identifiers such as ticket numbers and asset numbers may use monospace.
 
 ## Surfaces
@@ -36,9 +38,9 @@ these rules before introducing a new pattern.
 
 ## Application shell
 
-- Desktop navigation is a fixed 248px white rail attached to the left edge and full viewport height.
-- Primary and service navigation use the same blue-gray hierarchy; category icons stay monochrome.
-- The active item uses a brand-blue left rule, pale-blue background, and stronger blue text.
+- Desktop navigation is a fixed 248px deep-navy rail attached to the left edge and full viewport height.
+- Primary and service navigation use a quiet white-on-navy hierarchy; category icons stay monochrome.
+- The active item uses a brand-blue left rule, translucent white background, and white text.
 - The top header stays white and quiet so it does not compete with the current task.
 - Main content is fluid. Width limits belong to focused tasks, not to the application shell.
 - Mobile primary navigation scrolls horizontally; service entry remains on the home screen.

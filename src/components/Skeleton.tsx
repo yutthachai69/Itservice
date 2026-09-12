@@ -2,7 +2,7 @@ import { cn } from "@/lib/ui";
 
 /** Shimmering placeholder block for route-level loading states. */
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("sk rounded-lg bg-slate-200/70", className)} aria-hidden="true" />;
+  return <div className={cn("sk rounded-md bg-slate-200/70", className)} aria-hidden="true" />;
 }
 
 /** A card outline with a few skeleton lines. */

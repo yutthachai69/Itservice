@@ -17,7 +17,7 @@ export function TicketFilterDisclosure({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <details ref={detailsRef} open className="ticket-filters group">
+    <details ref={detailsRef} className="ticket-filters group">
       {children}
     </details>
   );

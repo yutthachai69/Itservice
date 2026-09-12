@@ -28,17 +28,17 @@ export const STATUS = {
 export const STATUS_LABEL: Record<string, string> = {
   OPEN: "เปิดเรื่อง",
   IN_PROGRESS: "กำลังดำเนินการ",
-  RESOLVED: "ดำเนินการเสร็จ",
+  RESOLVED: "รอผู้แจ้งยืนยัน",
   CLOSED: "ปิดงาน",
   CANCELLED: "ยกเลิก",
 };
 
 export const STATUS_COLOR: Record<string, string> = {
-  OPEN: "bg-amber-100 text-amber-800 ring-amber-200",
-  IN_PROGRESS: "bg-blue-100 text-blue-800 ring-blue-200",
-  RESOLVED: "bg-violet-100 text-violet-800 ring-violet-200",
-  CLOSED: "bg-emerald-100 text-emerald-800 ring-emerald-200",
-  CANCELLED: "bg-neutral-200 text-neutral-600 ring-neutral-300",
+  OPEN: "bg-amber-50 text-amber-800 ring-amber-200",
+  IN_PROGRESS: "bg-brand-weak text-brand-strong ring-brand/20",
+  RESOLVED: "bg-amber-50 text-amber-800 ring-amber-200",
+  CLOSED: "bg-slate-100 text-slate-700 ring-slate-200",
+  CANCELLED: "bg-slate-50 text-slate-500 ring-slate-200",
 };
 
 export const IT_STATUS_LABEL: Record<string, string> = {

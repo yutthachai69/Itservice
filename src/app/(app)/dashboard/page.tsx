@@ -23,12 +23,12 @@ import { DashboardFilters } from "./DashboardFilters";
 
 const STATUSES = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "CANCELLED"] as const;
 
-const BAR_COLOR: Record<(typeof STATUSES)[number], string> = {
+const STATUS_DOT_COLOR: Record<(typeof STATUSES)[number], string> = {
   OPEN: "bg-amber-400",
   IN_PROGRESS: "bg-brand",
-  RESOLVED: "bg-emerald-500",
+  RESOLVED: "bg-amber-500",
   CLOSED: "bg-slate-400",
-  CANCELLED: "bg-slate-200",
+  CANCELLED: "bg-slate-300",
 };
 
 const RANGE_WORD: Record<string, string> = {
@@ -87,7 +87,7 @@ export default async function DashboardPage({
       where: { status: "CLOSED", ...siteWhere, ...(from ? { closedAt: { gte: from } } : {}) },
     }),
     prisma.ticket.findMany({
-      where: { itStatus: "NEW", status: { not: "CANCELLED" }, ...siteWhere },
+      where: { itStatus: "NEW", status: { notIn: ["CLOSED", "CANCELLED"] }, ...siteWhere },
       select: {
         id: true,
         docNo: true,
@@ -144,12 +144,15 @@ export default async function DashboardPage({
   const avgScore = evalAgg._avg.score;
   const ticketSiteQuery = site ? `&site=${site}` : "";
   const activeQueueHref = `/tickets?status=active${ticketSiteQuery}`;
+  const inProgressHref = `/tickets?status=in_progress${ticketSiteQuery}`;
+  const resolvedHref = `/tickets?status=resolved${ticketSiteQuery}`;
+  const closedHref = `/tickets?status=closed_only${ticketSiteQuery}`;
   const urgentCount = overdue.length + loansLate.length;
   const firstOverdue = overdue[0];
   const priorityHref = firstOverdue
     ? `/tickets/${firstOverdue.t.id}`
     : loansLate.length
-      ? "/loans"
+      ? `/loans?view=overdue${site ? `&site=${site}` : ""}`
       : activeQueueHref;
 
   return (
@@ -182,7 +185,7 @@ export default async function DashboardPage({
               </h2>
               <span className="text-sm text-muted">ข้อมูลสถานะปัจจุบัน</span>
             </div>
-            <p className="mt-2 max-w-2xl text-sm text-slate-500">
+            <p className="mt-2 max-w-2xl text-sm text-muted">
               {firstOverdue
                 ? `งานที่เกินเวลามากที่สุด ${firstOverdue.t.docNo} · ${firstOverdue.sla.text}`
                 : loansLate.length
@@ -214,7 +217,7 @@ export default async function DashboardPage({
             </div>
             <Link
               href={priorityHref}
-              className="col-span-2 flex items-center justify-between border-t border-border px-5 py-3 text-sm font-medium text-brand transition-colors hover:bg-brand-weak/40"
+              className="col-span-2 flex items-center justify-between border-t border-border px-5 py-3 text-sm font-medium text-brand transition-colors hover:bg-brand-weak/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40"
             >
               <span>{urgentCount > 0 ? "เปิดรายการที่ควรทำก่อน" : "เปิดคิวงานทั้งหมด"}</span>
               <span aria-hidden="true">→</span>
@@ -223,7 +226,7 @@ export default async function DashboardPage({
         </div>
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <section aria-label="สรุปตัวชี้วัด" className="grid overflow-hidden rounded-md border border-border bg-card sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Kpi
           icon={Inbox}
           label="เปิดค้างทั้งหมด"
@@ -231,17 +234,17 @@ export default async function DashboardPage({
           value={openCount}
           href={activeQueueHref}
         />
-        <Kpi icon={Loader2} label="กำลังดำเนินการ" sub="สถานะปัจจุบัน" value={inProgress} />
-        <Kpi icon={Hourglass} label="รอผู้แจ้งยืนยัน" sub="สถานะปัจจุบัน" value={resolvedWaiting} />
+        <Kpi icon={Loader2} label="กำลังดำเนินการ" sub="สถานะปัจจุบัน" value={inProgress} href={inProgressHref} />
+        <Kpi icon={Hourglass} label="รอผู้แจ้งยืนยัน" sub="สถานะปัจจุบัน" value={resolvedWaiting} href={resolvedHref} />
         <Kpi icon={FilePlus2} label="งานเข้าใหม่" sub={rangeWord} value={createdInRange} />
-        <Kpi icon={CheckCircle2} label="ปิดงาน" sub={rangeWord} value={closedInRange} />
+        <Kpi icon={CheckCircle2} label="ปิดงาน" sub={rangeWord} value={closedInRange} href={closedHref} />
         <Kpi
           icon={Star}
           label="ความพึงพอใจ"
           sub={`${rangeWord} · ${evalAgg._count._all} รายการ`}
           value={avgScore ? avgScore.toFixed(2) : "—"}
         />
-      </div>
+      </section>
 
       {loansLate.length > 0 && (
         <section className="card p-5">
@@ -250,17 +253,18 @@ export default async function DashboardPage({
           </SectionTitle>
           <ul className="mt-3 divide-y divide-border text-sm">
             {loansLate.map((l) => {
-              const days = Math.floor((now.getTime() - new Date(l.dueDate).getTime()) / 86_400_000);
+              const days = Math.max(1, Math.ceil((now.getTime() - new Date(l.dueDate).getTime()) / 86_400_000));
               return (
                 <li key={l.id} className="flex flex-wrap items-center gap-2 py-2">
                   <span className="font-medium text-slate-700">{l.item.name}</span>
-                  <span className="text-slate-500">{l.borrowerName}</span>
+                  <span className="text-muted">{l.borrowerName}</span>
                   <span className="text-xs text-slate-400">กำหนดคืน {fmtDate(l.dueDate)}</span>
                   <Pill tone="red">เลย {days} วัน</Pill>
                   {l.ticket && (
                     <Link
                       href={`/tickets/${l.ticket.id}`}
-                      className="ml-auto font-mono text-xs text-brand hover:underline"
+                      aria-label={`เปิดคำร้อง ${l.ticket.docNo}`}
+                      className="ml-auto rounded-sm font-mono text-xs text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
                     >
                       {l.ticket.docNo}
                     </Link>
@@ -275,16 +279,43 @@ export default async function DashboardPage({
       <section className="card p-5">
         <SectionTitle>แยกตามประเภทแบบฟอร์ม</SectionTitle>
         <p className="mt-0.5 text-xs text-muted">นับจากงานที่สร้างในช่วง {rangeWord}</p>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+        <ul className="mt-4 space-y-2 lg:hidden" aria-label="สรุปคำร้องตามประเภทฟอร์ม">
+          {FORM_LIST.map((f) => {
+            const row = formPivot[f.type] ?? {};
+            const total = STATUSES.reduce((sum, s) => sum + (row[s] ?? 0), 0);
+            return (
+              <li key={f.type} className="rounded-md border border-border bg-card p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Link href={`/tickets?formType=${f.type}${site ? `&site=${site}` : ""}`} className="min-w-0 rounded-sm text-sm font-medium text-slate-800 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
+                    <span className="mr-2 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">{f.code}</span>
+                    {f.shortTitle}
+                  </Link>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900">{total}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {STATUSES.filter((s) => row[s]).map((s) => (
+                    <span key={s} className="inline-flex items-center gap-1 rounded bg-slate-50 px-1.5 py-1 text-[11px] text-slate-600">
+                      <span className={cn("h-1.5 w-1.5 rounded-full", STATUS_DOT_COLOR[s])} aria-hidden="true" />
+                      {STATUS_LABEL[s]} {row[s]}
+                    </span>
+                  ))}
+                  {total === 0 && <span className="text-[11px] text-slate-400">ยังไม่มีรายการในช่วงนี้</span>}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div role="region" aria-label="ตารางสรุปคำร้องตามประเภทฟอร์ม" tabIndex={0} className="mt-4 hidden overflow-x-auto focus-visible:ring-2 focus-visible:ring-brand/30 lg:block">
+          <table className="w-full min-w-[620px] text-sm">
+            <caption className="sr-only">สรุปจำนวนคำร้องแยกตามประเภทฟอร์มและสถานะ</caption>
             <thead>
-              <tr className="border-b border-border text-xs text-slate-500">
+              <tr className="border-b border-border text-xs text-muted">
                 <th className="px-2 pb-2 text-left font-medium">ฟอร์ม</th>
-                <th className="px-2 pb-2 text-left font-medium">สัดส่วนสถานะ</th>
                 {STATUSES.map((s) => (
                   <th key={s} className="px-2 pb-2 text-right font-medium">
                     <span className="inline-flex items-center gap-1.5">
-                      <span className={cn("h-2 w-2 rounded-full", BAR_COLOR[s])} aria-hidden="true" />
+                      <span className={cn("h-2 w-2 rounded-full", STATUS_DOT_COLOR[s])} aria-hidden="true" />
                       {STATUS_LABEL[s]}
                     </span>
                   </th>
@@ -301,29 +332,11 @@ export default async function DashboardPage({
                     <td className="px-2 py-2.5">
                       <Link
                         href={`/tickets?formType=${f.type}${site ? `&site=${site}` : ""}`}
-                        className="inline-flex items-center gap-2 text-slate-700 hover:text-brand"
+                        className="inline-flex items-center gap-2 rounded-sm text-slate-700 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
                       >
                         <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs">{f.code}</span>
                         <span className="hidden sm:inline">{f.shortTitle}</span>
                       </Link>
-                    </td>
-                    <td className="px-2 py-2.5">
-                      {total === 0 ? (
-                        <span className="text-xs text-slate-300">—</span>
-                      ) : (
-                        <div className="flex h-2 w-full min-w-[110px] overflow-hidden rounded-full bg-slate-100">
-                          {STATUSES.map((s) =>
-                            row[s] ? (
-                              <div
-                                key={s}
-                                className={BAR_COLOR[s]}
-                                style={{ width: `${((row[s] ?? 0) / total) * 100}%` }}
-                                title={`${STATUS_LABEL[s]}: ${row[s]}`}
-                              />
-                            ) : null,
-                          )}
-                        </div>
-                      )}
                     </td>
                     {STATUSES.map((s) => (
                       <td
@@ -353,7 +366,7 @@ export default async function DashboardPage({
             งานเกิน SLA (ยังไม่รับงาน)
           </SectionTitle>
           {overdue.length === 0 ? (
-            <EmptyLine>ไม่มีงานที่เกิน SLA — ตามทันทุกงาน 👍</EmptyLine>
+            <EmptyLine>ไม่มีงานที่เกิน SLA — ตามทันทุกงาน</EmptyLine>
           ) : (
             <ul className="mt-3 space-y-1.5 text-sm">
               {overdue.slice(0, 10).map(({ t, sla }) => (
@@ -361,14 +374,14 @@ export default async function DashboardPage({
                   key={t.id}
                   className="flex items-center gap-2 rounded-md border-l-2 border-red-400 bg-red-50/40 py-2 pr-2 pl-3"
                 >
-                  <Link href={`/tickets/${t.id}`} className="font-mono text-brand hover:underline">
+                  <Link href={`/tickets/${t.id}`} aria-label={`เปิดคำร้อง ${t.docNo}`} className="rounded-sm font-mono text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
                     {t.docNo}
                   </Link>
                   <span className="rounded bg-white px-1.5 py-0.5 font-mono text-xs text-slate-600 ring-1 ring-border">
                     {t.formType}
                   </span>
-                  <span className="flex-1 truncate text-slate-500">{t.reqName}</span>
-                  <Pill tone="red">{sla.text}</Pill>
+                   <span className="min-w-0 flex-1 line-clamp-2 break-words text-muted" title={t.reqName}>{t.reqName}</span>
+                   <Pill tone="red">{sla.text}</Pill>
                 </li>
               ))}
             </ul>
@@ -391,12 +404,19 @@ export default async function DashboardPage({
                       <Avatar name={name} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="truncate text-slate-700">{name}</span>
-                          <span className="shrink-0 tabular-nums text-xs text-slate-500">
+                           <span className="truncate text-slate-700" title={name}>{name}</span>
+                          <span className="shrink-0 tabular-nums text-xs text-muted">
                             {r._count._all} งาน
                           </span>
                         </div>
-                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100"
+                          role="progressbar"
+                          aria-label={`สัดส่วนงานของ ${name}`}
+                          aria-valuemin={0}
+                          aria-valuemax={workloadMax}
+                          aria-valuenow={r._count._all}
+                        >
                           <div
                             className="h-full rounded-full bg-brand"
                             style={{ width: `${(r._count._all / workloadMax) * 100}%` }}
@@ -429,8 +449,18 @@ export default async function DashboardPage({
             const pct = evalAgg._count._all ? (n / evalAgg._count._all) * 100 : 0;
             return (
               <div key={s} className="flex items-center gap-2 text-sm">
-                <span className="w-9 shrink-0 text-slate-500">{s} ★</span>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                <span className="inline-flex w-9 shrink-0 items-center gap-1 text-muted">
+                  {s}
+                  <Star size={12} fill="currentColor" aria-hidden="true" />
+                </span>
+                <div
+                  className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"
+                  role="progressbar"
+                  aria-label={`${s} คะแนน`}
+                  aria-valuemin={0}
+                  aria-valuemax={evalAgg._count._all}
+                  aria-valuenow={n}
+                >
                   <div className="h-full rounded-full bg-amber-400" style={{ width: `${pct}%` }} />
                 </div>
                 <span className="w-8 shrink-0 text-right tabular-nums text-xs text-slate-400">{n}</span>
@@ -441,13 +471,21 @@ export default async function DashboardPage({
         {recentEvals.length > 0 && (
           <ul className="mt-4 divide-y divide-border text-sm">
             {recentEvals.map((e) => (
-              <li key={e.id} className="py-2">
-                <Link href={`/tickets/${e.ticket.id}`} className="font-mono text-brand hover:underline">
+               <li key={e.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-1 py-2">
+                <Link href={`/tickets/${e.ticket.id}`} aria-label={`เปิดคำร้อง ${e.ticket.docNo}`} className="rounded-sm font-mono text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
                   {e.ticket.docNo}
                 </Link>{" "}
-                <span className="text-amber-500">{"★".repeat(e.score)}</span>
-                {e.comment && <span className="text-slate-600"> — {e.comment}</span>}
-                <span className="ml-2 text-xs text-slate-400">{fmtDateTime(e.createdAt)}</span>
+                <span
+                  role="img"
+                  aria-label={`${e.score} จาก 5 คะแนน`}
+                  className="inline-flex items-center gap-0.5 text-amber-500"
+                >
+                  {Array.from({ length: e.score }, (_, index) => (
+                    <Star key={index} size={13} fill="currentColor" aria-hidden="true" />
+                  ))}
+                </span>
+                 {e.comment && <span className="min-w-full break-words text-slate-600">{e.comment}</span>}
+                 <span className="text-xs text-slate-400">{fmtDateTime(e.createdAt)}</span>
               </li>
             ))}
           </ul>
@@ -471,21 +509,33 @@ function Kpi({
   href?: string;
 }) {
   const inner = (
-    <div className={cn("card h-full p-4 transition", href && "hover:-translate-y-0.5 hover:shadow-md")}>
+    <div
+      className={cn(
+        "h-full border-t border-border p-4 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0",
+        href && "group transition hover:bg-brand-weak/25",
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         {/* docs/ui-foundation.md: category icons stay monochrome — one brand
             tint for every KPI tile, differentiated by icon + number only. */}
         <span className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-weak text-brand">
           <Icon size={17} aria-hidden="true" />
         </span>
-        {href && <span className="text-xs text-slate-300">→</span>}
+        {href && <span aria-hidden="true" className="text-xs text-slate-300 transition-colors group-hover:text-brand">→</span>}
       </div>
       <div className="mt-3 text-2xl font-bold tabular-nums text-slate-900">{value}</div>
       <div className="mt-0.5 text-xs font-medium text-slate-600">{label}</div>
       {sub && <div className="text-[11px] text-slate-400">{sub}</div>}
     </div>
   );
-  return href ? <Link href={href}>{inner}</Link> : inner;
+  return href ? (
+    <Link
+      href={href}
+      className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40"
+    >
+      {inner}
+    </Link>
+  ) : inner;
 }
 
 function SectionTitle({
@@ -502,7 +552,7 @@ function SectionTitle({
       ? "bg-red-50 text-red-500"
       : tone === "amber"
         ? "bg-amber-50 text-amber-500"
-        : "bg-slate-100 text-slate-500";
+        : "bg-slate-100 text-muted";
   return (
     <h2 className="flex items-center gap-2.5 font-semibold text-slate-900">
       {Icon && (
@@ -528,7 +578,7 @@ function Avatar({ name }: { name: string }) {
     .join("")
     .toUpperCase();
   return (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-weak text-xs font-semibold text-brand">
+    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-weak text-xs font-semibold text-brand">
       {initials || "?"}
     </span>
   );

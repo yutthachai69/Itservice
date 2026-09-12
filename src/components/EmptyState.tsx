@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Inbox, type LucideIcon } from "lucide-react";
+import { buttonClass } from "@/components/Button";
 
 export function EmptyState({
   icon: Icon = Inbox,
@@ -13,7 +14,7 @@ export function EmptyState({
   cta?: { href: string; label: string };
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border-strong bg-card px-6 py-12 text-center">
+    <div role="status" aria-live="polite" className="flex flex-col items-center justify-center rounded-md border border-dashed border-border-strong bg-card px-6 py-12 text-center">
       <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-weak text-brand">
         <Icon size={20} strokeWidth={1.7} aria-hidden="true" />
       </span>
@@ -22,7 +23,7 @@ export function EmptyState({
       {cta && (
         <Link
           href={cta.href}
-          className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-strong"
+          className={buttonClass({ className: "mt-4" })}
         >
           {cta.label}
         </Link>

@@ -8,6 +8,7 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 
 import { loginAs } from "./actions";
 import { AppPreview } from "./AppPreview";
+import { Button } from "@/components/Button";
 
 const ROLE_LABEL: Record<string, string> = {
   USER: "ผู้ใช้ทั่วไป",
@@ -41,7 +42,7 @@ export default async function LoginPage({
     : [];
 
   return (
-    <main className="relative flex min-h-[600px] flex-1 items-center overflow-hidden bg-background text-foreground">
+    <main className="relative flex min-h-[100svh] flex-1 items-center overflow-hidden bg-background text-foreground">
       {/* soft pastel blobs */}
       <div
         className="pointer-events-none absolute -right-40 -top-40 hidden h-[560px] w-[560px] rounded-full bg-brand/[0.07] lg:block"
@@ -64,7 +65,7 @@ export default async function LoginPage({
           />
           <span className="text-lg font-bold tracking-tight text-slate-900">TSM GROUP</span>
         </div>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.27em] text-slate-500">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.27em] text-muted">
           IT Service Desk
         </span>
       </header>
@@ -72,7 +73,7 @@ export default async function LoginPage({
       {/* centred content */}
       <div className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-x-12 gap-y-14 px-6 py-24 sm:px-10 lg:grid-cols-2 lg:px-14 xl:px-20">
         <div className="w-full max-w-[460px]">
-          <h1 className="font-display text-[38px] font-semibold leading-[1.15] tracking-tight sm:text-[46px] lg:text-[50px]">
+          <h1 className="text-[38px] font-semibold leading-[1.15] tracking-tight sm:text-[46px] lg:text-[50px]">
             <span className="block text-slate-900">ระบบให้บริการ</span>
             <span className="block text-brand">เทคโนโลยีสารสนเทศ</span>
           </h1>
@@ -82,7 +83,7 @@ export default async function LoginPage({
           {e && (
             <p
               role="alert"
-              className="mt-7 rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700 ring-1 ring-red-200"
+              className="mt-7 rounded-md bg-red-50 px-4 py-3 text-sm font-medium text-red-700 ring-1 ring-red-200"
             >
               {ERR_LABEL[e] ?? "เข้าสู่ระบบไม่สำเร็จ"}
             </p>
@@ -91,7 +92,7 @@ export default async function LoginPage({
           <div className="mt-8">
             <a
               href="/api/auth/login"
-              className="group flex h-[56px] w-full items-center justify-between rounded-xl bg-[#191c20] px-5 text-white shadow-lg transition hover:-translate-y-px hover:bg-black"
+              className="group flex h-[56px] w-full items-center justify-between rounded-md bg-[#191c20] px-5 text-white shadow-sm transition hover:-translate-y-px hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
             >
               <span className="flex items-center gap-3.5">
                 <MsLogo />
@@ -108,7 +109,7 @@ export default async function LoginPage({
 
           {mock && (
             <details className="group mt-6">
-              <summary className="flex cursor-pointer list-none items-center justify-between border-t border-border pt-4 text-xs font-medium text-muted transition hover:text-slate-700">
+              <summary className="flex cursor-pointer list-none items-center justify-between rounded-sm border-t border-border pt-4 text-xs font-medium text-muted outline-none transition hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2">
                 <span>Development access</span>
                 <ChevronDown size={15} className="transition-transform group-open:rotate-180" />
               </summary>
@@ -116,7 +117,8 @@ export default async function LoginPage({
                 <select
                   name="userId"
                   defaultValue={devUsers[0]?.id}
-                  className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15"
+                  aria-label="ผู้ใช้สำหรับเข้าโหมดพัฒนา"
+                  className="control-lg w-full px-3 text-sm"
                 >
                   {devUsers.map((u) => (
                     <option key={u.id} value={u.id}>
@@ -124,12 +126,9 @@ export default async function LoginPage({
                     </option>
                   ))}
                 </select>
-                <button
-                  type="submit"
-                  className="h-11 w-full rounded-lg border border-border-strong bg-card text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                >
+                <Button type="submit" variant="secondary" size="lg" className="w-full">
                   เข้าสู่ระบบ Dev
-                </button>
+                </Button>
               </form>
             </details>
           )}

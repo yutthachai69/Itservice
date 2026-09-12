@@ -43,6 +43,7 @@ export function Button({
   className,
   children,
   disabled,
+  type,
   ...rest
 }: CommonProps & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
@@ -50,6 +51,7 @@ export function Button({
       className={buttonClass({ variant, size, className })}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
+      type={type ?? "button"}
       {...rest}
     >
       {loading && <Spinner />}
@@ -65,6 +67,7 @@ export function ButtonLink({
   className,
   children,
   href,
+  onClick,
   ...rest
 }: CommonProps & { href: string } & Omit<React.ComponentProps<typeof Link>, "href" | "className">) {
   return (
@@ -75,8 +78,17 @@ export function ButtonLink({
         size,
         className: cn(loading && "pointer-events-none opacity-55", className),
       })}
-      aria-busy={loading || undefined}
       {...rest}
+      aria-busy={loading || undefined}
+      aria-disabled={loading || undefined}
+      tabIndex={loading ? -1 : rest.tabIndex}
+      onClick={(event) => {
+        if (loading) {
+          event.preventDefault();
+          return;
+        }
+        onClick?.(event);
+      }}
     >
       {children}
     </Link>

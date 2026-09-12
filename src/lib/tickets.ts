@@ -81,6 +81,28 @@ export function validateFormData(
     values[step.fieldKey] = s ? Number(s) : null;
   }
 
+  if (def.type === "F07" && values.system === "other" && !String(values.systemOther ?? "").trim()) {
+    errors.systemOther = "กรุณาระบุชื่อระบบที่ต้องการแก้ไข";
+  }
+  if (def.type === "F10") {
+    const selectedItems = Array.isArray(values.items) ? values.items : [];
+    const needsItemDetail = selectedItems.some((item) => item === "rdp" || item === "web_online" || item === "other");
+    if (needsItemDetail && !String(values.itemsDetail ?? "").trim()) {
+      errors.itemsDetail = "กรุณาระบุชื่อระบบหรือรายละเอียดของรายการที่เลือก";
+    }
+  }
+
+  const borrowDate = String(values.borrowDate ?? "");
+  const returnDate = String(values.returnDate ?? "");
+  if (def.type === "F03" && borrowDate && returnDate && returnDate < borrowDate) {
+    errors.returnDate = "วันที่คืนต้องไม่ก่อนวันที่ยืม";
+  }
+  const startAt = String(values.startAt ?? "");
+  const endAt = String(values.endAt ?? "");
+  if (def.type === "F12" && startAt && endAt && endAt <= startAt) {
+    errors.endAt = "เวลาสิ้นสุดต้องหลังเวลาเริ่มใช้";
+  }
+
   return { ok: Object.keys(errors).length === 0, errors, values };
 }
 

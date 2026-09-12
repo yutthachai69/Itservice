@@ -17,7 +17,7 @@ export default async function EvaluatePage({ params }: { params: Promise<{ id: s
   if (t.evaluation || t.status !== "CLOSED") redirect(`/tickets/${ticketId}`);
 
   return (
-    <div className="max-w-md">
+    <div className="mx-auto max-w-2xl">
       <PageHeader title="ประเมินความพึงพอใจ" subtitle={`${t.docNo} · ${t.formType}`} />
       <EvaluateForm ticketId={ticketId} />
     </div>

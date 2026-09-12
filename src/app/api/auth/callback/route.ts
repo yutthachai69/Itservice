@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { provisionFromGraph } from "@/lib/auth";
+import { provisionFromGraph, sessionCookieValue } from "@/lib/auth";
 import { exchangeCode, fetchGraphMe } from "@/lib/entra";
 
 const CLEAR = { path: "/", maxAge: 0 };
@@ -27,9 +27,10 @@ export async function GET(req: NextRequest) {
     const uid = await provisionFromGraph(me);
 
     const res = NextResponse.redirect(new URL("/", req.url));
-    res.cookies.set("uid", String(uid), {
+    res.cookies.set("uid", sessionCookieValue(uid), {
       httpOnly: true,
       sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 12,
     });

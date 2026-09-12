@@ -50,7 +50,12 @@ export function HeroArt({ className }: { className?: string }) {
 
 export function EmptyInboxArt({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 120 96" className={className} role="img" aria-label="ยังไม่มีคำร้อง">
+    <svg
+      viewBox="0 0 120 96"
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+    >
       <path d="M60 6l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="var(--color-brand)" opacity=".8" />
       <path d="M88 18l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="var(--color-brand)" opacity=".5" />
       <path d="M31 20l1.6 3.4L36 25l-3.4 1.6L31 30l-1.6-3.4L26 25l3.4-1.6z" fill="var(--color-brand)" opacity=".45" />

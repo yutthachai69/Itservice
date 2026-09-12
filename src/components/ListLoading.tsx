@@ -3,9 +3,10 @@ import { Skeleton } from "@/components/Skeleton";
 /** Generic list-page loading state: title + filter bar + row list. */
 export function ListLoading({ rows = 8, cols = 4 }: { rows?: number; cols?: number }) {
   return (
-    <div className="space-y-4">
+    <div role="status" className="space-y-4" aria-busy="true" aria-live="polite">
+      <p className="sr-only">กำลังโหลดรายการ</p>
       <Skeleton className="h-7 w-52" />
-      <Skeleton className="h-16 w-full rounded-xl" />
+      <Skeleton className="h-16 w-full rounded-md" />
       <div className="card divide-y divide-border">
         {Array.from({ length: rows }).map((_, r) => (
           <div key={r} className="flex items-center gap-4 px-3 py-3">

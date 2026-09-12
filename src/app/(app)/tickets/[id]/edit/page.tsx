@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -57,10 +59,23 @@ export default async function EditTicketPage({
   });
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full">
+      <nav aria-label="เส้นทางแก้ไขคำร้อง" className="mb-1 text-xs text-muted">
+        <Link
+          href={`/tickets/${ticketId}`}
+          className="inline-flex items-center gap-1.5 rounded-sm px-1 py-1 transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
+        >
+          <ArrowLeft size={13} aria-hidden="true" />
+          กลับรายละเอียดคำร้อง
+        </Link>
+      </nav>
       <PageHeader
-        chip={def.code}
-        title={`แก้ไข ${t.docNo}`}
+        chip={`${def.code} · แก้ไขคำร้อง`}
+        title={
+          <>
+            แก้ไขคำร้อง <span className="font-mono text-[1.15rem]">{t.docNo}</span>
+          </>
+        }
         subtitle={
           it
             ? "IT แก้ไขได้ทุกสถานะ"

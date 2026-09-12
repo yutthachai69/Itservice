@@ -53,7 +53,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastCtx.Provider value={api}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 p-4 sm:items-end">
+      <div className="pointer-events-none fixed inset-x-0 bottom-16 z-50 flex flex-col items-center gap-2 p-4 sm:items-end xl:bottom-0">
         {items.map((t) => (
           <ToastRow key={t.id} toast={t} dismiss={dismiss} />
         ))}
@@ -64,11 +64,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 function ToastRow({ toast, dismiss }: { toast: Toast; dismiss: (id: number) => void }) {
   const { id } = toast;
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
+    if (paused || toast.leaving) return;
     const timer = setTimeout(() => dismiss(id), toast.tone === "error" ? 6000 : 3500);
     return () => clearTimeout(timer);
-  }, [id, toast.tone, dismiss]);
+  }, [id, toast.leaving, toast.tone, dismiss, paused]);
 
   const tones: Record<Tone, { ring: string; icon: React.ReactNode }> = {
     success: { ring: "ring-emerald-200", icon: <CheckCircle2 size={18} className="text-emerald-600" /> },
@@ -79,21 +81,28 @@ function ToastRow({ toast, dismiss }: { toast: Toast; dismiss: (id: number) => v
 
   return (
     <div
-      role="status"
+      role={toast.tone === "error" ? "alert" : "status"}
+      aria-live={toast.tone === "error" ? "assertive" : "polite"}
+      aria-atomic="true"
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={() => setPaused(false)}
       className={cn(
-        "pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-xl bg-card px-3.5 py-3 text-sm text-slate-700 shadow-lg ring-1",
+        "pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-md bg-card px-3.5 py-3 text-sm text-slate-700 shadow-md ring-1",
         tone.ring,
         toast.leaving ? "toast-out" : "toast-in",
       )}
     >
-      <span className="mt-0.5 shrink-0">{tone.icon}</span>
+      <span className="mt-0.5 shrink-0" aria-hidden="true">{tone.icon}</span>
       <p className="min-w-0 flex-1">{toast.message}</p>
       <button
+        type="button"
         onClick={() => dismiss(id)}
         aria-label="ปิด"
-        className="-mr-1 shrink-0 rounded p-0.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+        className="-mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
       >
-        <X size={15} />
+        <X size={15} aria-hidden="true" />
       </button>
     </div>
   );

@@ -29,19 +29,19 @@ export function ServiceNav() {
             href={service.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "group flex items-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm transition-colors",
+              "group flex min-w-0 items-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-inset",
               active
-                ? "border-brand bg-brand-weak font-medium text-brand"
-                : "border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                ? "border-brand bg-white/10 font-medium text-white"
+                : "border-transparent text-white/75 hover:bg-white/5 hover:text-white",
             )}
           >
             <Icon
               size={16}
               strokeWidth={1.8}
               aria-hidden="true"
-              className={cn("shrink-0", active ? "text-brand" : "text-slate-400 group-hover:text-brand")}
+              className={cn("shrink-0", active ? "text-brand-weak" : "text-white/55 group-hover:text-brand-weak")}
             />
-            <span>{service.label}</span>
+            <span className="min-w-0 break-words">{service.label}</span>
           </Link>
         );
       })}

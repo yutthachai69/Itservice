@@ -2,7 +2,8 @@ import { Skeleton, SkeletonCard } from "@/components/Skeleton";
 
 export default function Loading() {
   return (
-    <div className="space-y-6">
+    <div role="status" className="space-y-6" aria-busy="true" aria-live="polite">
+      <p className="sr-only">กำลังโหลดข้อมูลแดชบอร์ด</p>
       <Skeleton className="h-7 w-40" />
       <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {Array.from({ length: 6 }).map((_, i) => (

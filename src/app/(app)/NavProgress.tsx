@@ -43,11 +43,16 @@ export function NavProgress() {
   }, [pathname]);
 
   return (
-    <div className="no-print pointer-events-none fixed inset-x-0 top-0 z-[60] h-[2px]" aria-hidden="true">
-      <div
-        className="h-full bg-brand shadow-[0_0_8px_var(--color-brand)] transition-[width,opacity] duration-200 ease-out"
-        style={{ width: `${value}%`, opacity: value === 0 ? 0 : 1 }}
-      />
-    </div>
+    <>
+      <span role="status" aria-live="polite" className="sr-only">
+        {value > 0 ? "กำลังโหลดหน้า" : ""}
+      </span>
+      <div className="no-print pointer-events-none fixed inset-x-0 top-0 z-[60] h-[2px]" aria-hidden="true">
+        <div
+          className="nav-progress-bar h-full bg-brand shadow-[0_0_8px_var(--color-brand)] transition-[width,opacity] duration-200 ease-out"
+          style={{ width: `${value}%`, opacity: value === 0 ? 0 : 1 }}
+        />
+      </div>
+    </>
   );
 }

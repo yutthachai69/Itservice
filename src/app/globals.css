@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   /* Product palette: the original TUSM navy/blue with restrained cool neutrals. */
   --background: #f2f5fb;
   --foreground: #16202f;
@@ -36,7 +37,6 @@
   --color-danger: var(--danger);
   --color-sidebar: var(--sidebar);
   --font-sans: var(--font-ui);
-  --font-display: var(--font-itim);
   /* docs/ui-foundation.md: default radius is 10px — retokenize rounded-md so
      every control (buttons, badges, inputs, cards) shares one value instead
      of scattering rounded-[10px] arbitrary values around the app. */
@@ -100,6 +100,78 @@ textarea::placeholder {
   box-shadow: 0 1px 2px rgb(15 42 79 / 0.04);
 }
 
+/* Shared form controls: one height, border and focus treatment across filters. */
+@utility control {
+  height: 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+@utility control-lg {
+  height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+@utility control-select {
+  height: 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--foreground);
+  padding-inline: 0.625rem;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+@utility control-select-compact {
+  height: 2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--foreground);
+  padding-inline: 0.5rem;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+@utility control-area {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.control:focus,
+.control-lg:focus,
+.control-select:focus,
+.control-select-compact:focus,
+.control-area:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 15%, transparent);
+}
+
+.control:disabled,
+.control-lg:disabled,
+.control-select:disabled,
+.control-select-compact:disabled,
+.control-area:disabled {
+  cursor: not-allowed;
+  background: var(--surface-subtle);
+  color: var(--muted);
+  opacity: 0.78;
+}
+
 /* Login illustration: connected-sites network. */
 @keyframes lp-draw {
   to { stroke-dashoffset: 0; }
@@ -158,7 +230,8 @@ textarea::placeholder {
 .toast-out { opacity: 0; transform: translateY(6px); transition: opacity 0.18s ease, transform 0.18s ease; }
 
 @media (prefers-reduced-motion: reduce) {
-  .sk, .toast-in { animation: none; }
+  .sk, .toast-in, .animate-spin { animation: none !important; }
+  .nav-progress-bar { transition: none !important; }
   .toast-out { transition: none; }
 }
 

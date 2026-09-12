@@ -38,7 +38,7 @@ export function CardHeader({
       </div>
       {action &&
         (isLinkAction(action) ? (
-          <Link href={action.href} className="shrink-0 text-sm font-medium text-brand hover:underline">
+          <Link href={action.href} className="inline-flex min-h-8 shrink-0 items-center rounded-md px-2 text-sm font-medium text-brand transition-colors hover:bg-brand-weak/40 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
             {action.label}
           </Link>
         ) : (

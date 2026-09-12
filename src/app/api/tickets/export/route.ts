@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   const it = isIT(user.role);
   const where: Prisma.TicketWhereInput = {};
   if (!it || sp.get("mine") === "1") where.requesterId = user.id;
+  if (it && sp.get("assignee") === "me") where.assignedToId = user.id;
   if (sp.get("formType")) where.formType = sp.get("formType")!;
   if (sp.get("site")) where.serviceSiteCode = sp.get("site")!;
   const status = sp.get("status") || "active";
@@ -20,8 +21,13 @@ export async function GET(req: NextRequest) {
   else if (status === "closed") where.status = { in: ["CLOSED", "CANCELLED"] };
   else if (status === "closed_only") where.status = "CLOSED";
   else if (status !== "all") where.status = status.toUpperCase();
+  if (sp.get("sla") === "overdue") {
+    where.itStatus = "NEW";
+    where.status = { notIn: ["CLOSED", "CANCELLED"] };
+    where.slaDueAt = { lt: new Date() };
+  }
   const q = (sp.get("q") ?? "").trim();
-  if (q) where.OR = [{ docNo: { contains: q } }, { reqName: { contains: q } }];
+  if (q) where.OR = [{ docNo: { contains: q } }, { reqName: { contains: q } }, { note: { contains: q } }];
 
   const rows = await prisma.ticket.findMany({ where, orderBy: { createdAt: "desc" }, take: 5000 });
 

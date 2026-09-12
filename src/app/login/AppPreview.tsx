@@ -31,7 +31,7 @@ const RINGS: [Site, Site][] = [
   [SITES[3], SITES[4]],
 ];
 
-const REPLY = "#34d399"; // soft emerald for outbound "IT replies"
+const REPLY = "#7aa5e8"; // soft brand-blue for outbound "IT replies"
 const STORE_KEY = "tsm.lastSite";
 
 /** gentle quadratic arc between two points, bowed the same way for every edge */
@@ -92,7 +92,7 @@ export function AppPreview({ detectedSite = null }: { detectedSite?: string | nu
         )}
       </p>
 
-      <div className="relative aspect-square w-full">
+      <div className="relative aspect-square w-full" aria-hidden="true">
         <div className="lp-sway absolute inset-0">
           <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full text-brand" aria-hidden="true">
             <defs>

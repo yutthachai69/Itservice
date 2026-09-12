@@ -2,8 +2,9 @@ import { Skeleton } from "@/components/Skeleton";
 
 export default function Loading() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between gap-6 border-b border-border pb-4">
+    <div role="status" className="space-y-6" aria-busy="true" aria-live="polite">
+      <p className="sr-only">กำลังโหลดข้อมูล</p>
+      <div className="flex items-start justify-between gap-6 border-b border-border pb-4 sm:items-end">
         <div className="space-y-2">
           <Skeleton className="h-3 w-28" />
           <Skeleton className="h-7 w-64" />

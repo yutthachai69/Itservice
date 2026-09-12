@@ -26,6 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/", label: "หน้าแรก" },
     { href: "/tickets", label: "รายการคำร้อง" },
     { href: "/documents", label: "แบบฟอร์มเอกสาร" },
+    { href: "/knowledge", label: "ความรู้" },
     ...(it
       ? [
           { href: "/dashboard", label: "แดชบอร์ด" },
@@ -37,9 +38,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   ];
   return (
     <div className="min-w-0 flex-1">
+      <a
+        href="#main-content"
+        className="no-print fixed left-4 top-2 z-[60] -translate-y-16 rounded-md bg-sidebar px-3 py-2 text-sm font-medium text-white shadow-md transition-transform focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-background"
+      >
+        ข้ามไปเนื้อหาหลัก
+      </a>
       <NavProgress />
-      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[248px] overflow-y-auto border-r border-border bg-card lg:flex lg:flex-col">
-        <Link href="/" className="flex h-16 items-center gap-3 border-b border-border px-5 text-lg font-bold text-slate-900">
+      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[248px] overflow-y-auto border-r border-white/10 bg-sidebar text-white lg:flex lg:flex-col">
+        <Link href="/" className="flex h-16 items-center gap-3 border-b border-white/10 px-5 text-lg font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-weak">
           <Image
             src="/TSM.png"
             alt=""
@@ -51,22 +58,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </Link>
 
         <div className="px-3 py-5">
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">เมนูหลัก</p>
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/45">เมนูหลัก</p>
           <AppNav links={links} variant="sidebar" />
         </div>
 
-        <div className="border-t border-border px-3 py-5">
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">บริการ</p>
+        <div className="border-t border-white/10 px-3 py-5">
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/45">บริการ</p>
           <ServiceNav />
         </div>
 
-        <p className="mt-auto px-5 pb-5 pt-3 text-[11px] text-slate-400">{siteName(user.siteCode ?? "")} · IT Service Desk</p>
+        <p className="mt-auto px-5 pb-5 pt-3 text-[11px] text-white/45">{siteName(user.siteCode ?? "")} · IT Service Desk</p>
       </aside>
 
       <div className="min-w-0 lg:ml-[248px]">
         <header className="no-print sticky top-0 z-30 border-b border-border bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
           <div className="flex h-16 w-full items-center gap-4 px-4 sm:px-6 xl:px-8">
-            <Link href="/" className="flex items-center gap-2 font-semibold text-slate-900 lg:hidden">
+            <Link href="/" className="flex items-center gap-2 rounded-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2 lg:hidden">
               <Image
                 src="/TSM.png"
                 alt=""
@@ -77,6 +84,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               IT Service
             </Link>
             <div className="ml-auto flex items-center gap-3 text-sm">
+              <span
+                role="img"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-weak text-xs font-semibold text-brand sm:hidden"
+                title={user.displayName}
+                aria-label={user.displayName}
+              >
+                {initials(user.displayName)}
+              </span>
               <div className="hidden items-center gap-2.5 sm:flex">
                 <span
                   aria-hidden="true"
@@ -90,15 +105,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 </div>
               </div>
               <form action="/api/auth/logout" method="post">
-                <button className={buttonClass({ variant: "secondary", size: "sm" })}>ออกจากระบบ</button>
+                <button type="submit" className={buttonClass({ variant: "secondary", size: "sm" })}>ออกจากระบบ</button>
               </form>
             </div>
           </div>
-          <div className="relative h-11 overflow-hidden border-t border-border bg-card px-4 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-px after:h-[12px] after:bg-card after:content-[''] lg:hidden">
+          <div className="h-11 border-t border-border bg-card px-4 lg:hidden">
             <AppNav links={links} />
           </div>
         </header>
-        <main className="w-full px-4 py-6 sm:px-6 xl:px-8">
+        <main id="main-content" tabIndex={-1} className="w-full scroll-mt-20 px-4 py-6 outline-none sm:px-6 xl:px-8">
           <ToastProvider>{children}</ToastProvider>
         </main>
         <RememberSite siteName={user.siteCode ? siteName(user.siteCode) : null} />

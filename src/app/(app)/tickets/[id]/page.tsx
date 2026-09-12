@@ -1,4 +1,15 @@
-import { Pencil, Printer } from "lucide-react";
+import Link from "next/link";
+import {
+  Activity,
+  ArrowLeft,
+  Building2,
+  ChevronRight,
+  CircleDot,
+  Clock3,
+  Pencil,
+  Printer,
+  UserRound,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/Button";
 import { DetailSection } from "@/components/DetailSection";
@@ -10,12 +21,13 @@ import {
   isIT,
   IT_STATUS_LABEL,
   siteName,
+  STATUS_COLOR,
   STATUS_LABEL,
 } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { getFormDef } from "@/lib/form-defs";
 import { computeSla } from "@/lib/sla";
-import { cn, fmtDateTime } from "@/lib/ui";
+import { cn, fmtDate, fmtDateTime } from "@/lib/ui";
 import { Attachments } from "./Attachments";
 import { LoanPanel } from "./LoanPanel";
 import { WorkflowPanel } from "./WorkflowPanel";
@@ -110,28 +122,58 @@ export default async function TicketDetailPage({
 
   const statusSummary = [
     {
+      icon: CircleDot,
       label: "สถานะคำร้อง",
       value: STATUS_LABEL[ticket.status] ?? ticket.status,
-      meta: ticket.itStatus === "NEW" && ticket.slaDueAt ? sla.text : undefined,
-      alert: sla.overdue,
+      current: true,
     },
     {
+      icon: Activity,
       label: it ? "ขั้นตอนฝั่ง IT" : "ความคืบหน้า",
       value: it ? (IT_STATUS_LABEL[ticket.itStatus] ?? ticket.itStatus) : ticket.userStatus,
       meta: it ? ticket.userStatus : undefined,
     },
     {
+      icon: UserRound,
       label: "ผู้รับผิดชอบ",
       value: ticket.assignedTo?.displayName ?? "ยังไม่มอบหมาย",
+      meta: ticket.assignedTo ? "ผู้ดูแลงานปัจจุบัน" : "รอเจ้าหน้าที่รับงาน",
     },
     {
+      icon: Building2,
       label: "บริษัทที่ขอรับบริการ",
       value: siteName(ticket.serviceSiteCode),
+    },
+    {
+      icon: Clock3,
+      label: "SLA รับเรื่อง",
+      value: ticket.itStatus === "NEW" ? (sla.text || "ไม่ระบุกำหนด") : "รับงานแล้ว",
+      meta:
+        ticket.itStatus === "NEW"
+          ? "ระยะเวลารับเรื่อง"
+          : ticket.receivedAt
+            ? fmtDateTime(ticket.receivedAt)
+            : "สิ้นสุดการจับเวลา",
+      alert: sla.overdue,
     },
   ];
 
   return (
     <div className="space-y-5">
+      <nav aria-label="เส้นทางนำทาง" className="flex min-w-0 items-center gap-1.5 text-xs text-muted">
+        <Link
+          href={it ? "/tickets" : "/tickets?mine=1"}
+          className="inline-flex shrink-0 items-center gap-1 rounded-sm font-medium transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
+        >
+          <ArrowLeft size={13} aria-hidden="true" />
+          กลับไปรายการคำร้อง
+        </Link>
+        <ChevronRight size={13} className="shrink-0 text-slate-300" aria-hidden="true" />
+        <span className="font-mono text-muted">{ticket.formType}</span>
+        <ChevronRight size={13} className="shrink-0 text-slate-300" aria-hidden="true" />
+        <span aria-current="page" className="truncate text-muted">รายละเอียดคำร้อง</span>
+      </nav>
+
       {query.created === "1" && (
         <p role="status" className="border-l-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           ส่งคำร้องเรียบร้อยแล้ว เลขที่ <span className="font-mono font-semibold">{ticket.docNo}</span> สามารถติดตามสถานะได้จากหน้านี้
@@ -144,8 +186,13 @@ export default async function TicketDetailPage({
       )}
 
       <PageHeader
-        chip={`${ticket.formType} · รายละเอียดคำร้อง`}
-        title={<span className="font-mono text-[1.3rem]">{ticket.docNo}</span>}
+        chip={`${ticket.formType} · คำร้องบริการ IT`}
+        title={
+          <span>
+            <span className="block">รายละเอียดคำร้อง</span>
+            <span className="mt-1.5 block font-mono text-[1.45rem] tracking-normal">{ticket.docNo}</span>
+          </span>
+        }
         subtitle={def?.title ?? ticket.formType}
         actions={
           <>
@@ -163,26 +210,48 @@ export default async function TicketDetailPage({
         }
       />
 
-      <dl className="grid overflow-hidden rounded-md bg-sidebar text-white sm:grid-cols-2 xl:grid-cols-4">
-        {statusSummary.map((item, index) => (
-          <div
-            key={item.label}
-            className={cn(
-              "px-5 py-4",
-              index > 0 && "border-t border-white/10 sm:border-t-0 sm:border-l",
-            )}
-          >
-            <dt className="text-[11px] font-medium text-blue-100/55">{item.label}</dt>
-            <dd className={cn("mt-1 truncate text-sm font-semibold", item.alert ? "text-amber-300" : "text-white")}>
-              {item.value}
-            </dd>
-            {item.meta && (
-              <p className={cn("mt-0.5 truncate text-[11px]", item.alert ? "text-amber-200" : "text-blue-100/55")}>
-                {item.meta}
-              </p>
-            )}
-          </div>
-        ))}
+      <dl aria-label="สรุปสถานะคำร้อง" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+        {statusSummary.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div
+              key={item.label}
+                className={cn(
+                "flex min-w-0 items-start gap-3 rounded-md border px-4 py-3.5",
+                item.current
+                  ? cn("border-l-4 border-l-brand shadow-sm ring-1", STATUS_COLOR[ticket.status] ?? "bg-brand-weak text-brand-strong ring-brand/20")
+                  : item.alert
+                    ? "border-red-200 bg-red-50/55"
+                    : "border-border bg-card",
+              )}
+            >
+              <Icon
+                size={18}
+                strokeWidth={1.8}
+                className={cn(
+                  "mt-0.5 shrink-0",
+                  item.current ? "text-current" : item.alert ? "text-red-600" : "text-slate-400",
+                )}
+                aria-hidden="true"
+              />
+              <div className="min-w-0 flex-1">
+                <dt className={cn("flex items-center gap-2 text-[11px] font-medium", item.current ? "text-current opacity-70" : "text-muted")}>
+                  <span>{item.label}</span>
+                  {item.current && <span className="rounded-sm bg-brand px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">ปัจจุบัน</span>}
+                </dt>
+                  <dd className={cn("mt-0.5 flex min-w-0 items-center gap-2 break-words text-[15px] font-semibold leading-5", item.current ? "text-current" : item.alert ? "text-red-700" : "text-slate-900")}>
+                  {item.current && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />}
+                   <span className="line-clamp-2">{item.value}</span>
+                </dd>
+                {item.meta && (
+                    <p className={cn("mt-0.5 line-clamp-2 break-words text-[11px]", item.current ? "text-current opacity-65" : "text-slate-400")}>
+                    {item.meta}
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </dl>
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -279,11 +348,16 @@ export default async function TicketDetailPage({
                   </div>
                 </li>
               ))}
+              {ticket.events.length === 0 && (
+                <li className="px-1 py-8 text-center text-sm text-slate-400">
+                  ยังไม่มีรายการดำเนินการ
+                </li>
+              )}
             </ol>
           </section>
         </div>
 
-        <aside className="no-print order-first xl:order-last xl:sticky xl:top-20">
+        <aside className="no-print order-first self-start xl:sticky xl:top-20 xl:order-last xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
           <WorkflowPanel
             ticketId={ticket.id}
             status={ticket.status}
@@ -320,8 +394,8 @@ function DetailGrid({ items }: { items: DetailItem[] }) {
           key={`${item.label}-${item.value}`}
           className={item.wide ? "sm:col-span-2 2xl:col-span-3" : undefined}
         >
-          <dt className="text-xs font-medium text-slate-500">{item.label}</dt>
-          <dd className="mt-1 whitespace-pre-wrap text-sm font-medium text-slate-800">{item.value}</dd>
+          <dt className="text-xs font-medium text-muted">{item.label}</dt>
+          <dd className="mt-1 break-words whitespace-pre-wrap text-sm font-medium text-slate-800">{item.value}</dd>
         </div>
       ))}
     </dl>
@@ -342,6 +416,7 @@ function renderValue(
   const label = (value: string) => options?.find((option) => option.value === value)?.label ?? value;
   if (Array.isArray(raw)) return raw.map((value) => label(String(value))).filter(Boolean).join(", ");
   if (raw == null || raw === "") return "";
-  if (type === "datetime" || type === "date") return fmtDateTime(String(raw));
+  if (type === "date") return fmtDate(String(raw));
+  if (type === "datetime") return fmtDateTime(String(raw));
   return label(String(raw));
 }

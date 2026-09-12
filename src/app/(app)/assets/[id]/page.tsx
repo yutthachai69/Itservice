@@ -1,11 +1,26 @@
 import Link from "next/link";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
+import { ButtonLink } from "@/components/Button";
+import { PageHeader } from "@/components/PageHeader";
 import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
-import { SITES, siteName, isIT } from "@/lib/constants";
 import { ASSET_SECTIONS } from "@/lib/asset-def";
 import { assetToValues } from "@/lib/assets";
-import { fmtDateTime } from "@/lib/ui";
+import { isIT, siteName } from "@/lib/constants";
+import { prisma } from "@/lib/db";
+import { fmtDate, fmtDateTime } from "@/lib/ui";
+
+const FEATURED_FIELDS = new Set(["assetType", "siteCode", "userName", "status"]);
+
+const SECTION_TITLES: Record<string, string> = {
+  "ผู้เพิ่ม / ผู้ใช้งาน": "ข้อมูลผู้ใช้งาน",
+  System: "ระบบและสเปกเครื่อง",
+  Network: "เครือข่าย",
+  "Monitor / UPS / Keyboard / Mouse": "อุปกรณ์ต่อพ่วง",
+  "Machine Age / Warranty": "อายุเครื่องและการรับประกัน",
+  Permission: "สิทธิ์การใช้งาน",
+  "อื่นๆ": "ข้อมูลอื่น",
+};
 
 export default async function AssetDetailPage({
   params,
@@ -20,59 +35,151 @@ export default async function AssetDetailPage({
   if (!user) return null;
   if (!isIT(user.role)) redirect("/");
 
-  const a = await prisma.asset.findUnique({
+  const asset = await prisma.asset.findUnique({
     where: { id: assetId },
     include: { createdBy: { select: { displayName: true } } },
   });
-  if (!a) notFound();
+  if (!asset) notFound();
 
-  const values = assetToValues(a);
-  const optLabel = (key: string, v: string) => {
-    if (key === "siteCode") return siteName(v);
-    const f = ASSET_SECTIONS.flatMap((s) => s.fields).find((x) => x.key === key);
-    return f?.options?.find((o) => o.value === v)?.label ?? v;
+  const values = assetToValues(asset);
+  const allFields = ASSET_SECTIONS.flatMap((section) => section.fields);
+  const optionLabel = (key: string, value: string) => {
+    if (key === "siteCode") return siteName(value);
+    const field = allFields.find((item) => item.key === key);
+    if (field?.type === "date") return fmtDate(value);
+    if (field?.type === "datetime") return fmtDateTime(value);
+    return field?.options?.find((option) => option.value === value)?.label ?? value;
   };
 
+  const populatedSections = ASSET_SECTIONS.map((section) => ({
+    ...section,
+    fields: section.fields.filter((field) => {
+      const value = values[field.key]?.trim();
+      return Boolean(value) && !FEATURED_FIELDS.has(field.key);
+    }),
+  })).filter((section) => section.fields.length > 0);
+
+  const populatedCount = allFields.filter((field) => values[field.key]?.trim()).length;
+  const summary = [
+    { label: "ประเภท", value: asset.assetType || "ยังไม่ระบุ" },
+    { label: "บริษัท", value: siteName(asset.siteCode) },
+    { label: "ผู้ใช้งาน", value: asset.userName || "ยังไม่ระบุผู้ใช้งาน" },
+    { label: "สถานะ", value: values.status ? optionLabel("status", values.status) : "ยังไม่ระบุ", statusKey: values.status },
+  ];
+
   return (
-    <div className="max-w-4xl space-y-5">
-      <div className="flex flex-wrap items-center gap-3 border-b border-border pb-5">
-        <h1 className="font-mono text-lg text-slate-900">{a.assetNo}</h1>
-        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{a.assetType ?? "-"}</span>
-        <span className="text-sm text-slate-500">{siteName(a.siteCode)}</span>
+    <div className="w-full space-y-5">
+      <nav aria-label="เส้นทางหน้าทะเบียนเครื่อง" className="text-xs text-muted">
         <Link
-          href={`/assets/${a.id}/edit`}
-          className="ml-auto rounded-lg border border-border px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+          href="/assets"
+          className="inline-flex items-center gap-1 rounded-sm px-1 py-1 transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
         >
-          แก้ไข
+          <ArrowLeft size={13} aria-hidden="true" />
+          กลับทะเบียนเครื่อง
         </Link>
-      </div>
+      </nav>
+      <PageHeader
+        chip="ทะเบียนเครื่อง"
+        title={<span className="font-mono text-[1.35rem] tracking-tight">{asset.assetNo}</span>}
+        subtitle="ข้อมูลประจำเครื่อง ผู้ใช้งาน และรายละเอียดทางเทคนิค"
+        actions={
+          <ButtonLink href={`/assets/${asset.id}/edit`} variant="secondary" size="sm">
+            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+            แก้ไขข้อมูล
+          </ButtonLink>
+        }
+      />
 
-      <div className="card overflow-hidden">
-      {ASSET_SECTIONS.map((section) => (
-        <div key={section.title} className="border-b border-border p-5 last:border-b-0 sm:p-6">
-          <h2 className="font-semibold text-slate-900">{section.title}</h2>
-          <dl className="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
-            {section.fields.map((f) => {
-              const raw = values[f.key] ?? "";
-              return (
-                <div key={f.key} className="flex flex-wrap gap-x-2 gap-y-0.5">
-                  <dt className="min-w-[140px] shrink-0 text-slate-400">{f.label}</dt>
-                  <dd className="text-slate-700 whitespace-pre-wrap">
-                    {raw ? optLabel(f.key, raw) : "-"}
-                  </dd>
-                </div>
-              );
-            })}
-          </dl>
-        </div>
-      ))}
-      </div>
+      {populatedSections.length > 1 && (
+        <nav aria-label="ข้ามไปยังหมวดข้อมูลเครื่อง" className="flex max-w-full items-center gap-1.5 overflow-x-auto rounded-md border border-border bg-white px-2 py-1.5 text-xs shadow-sm">
+          <span className="shrink-0 px-2 font-medium text-muted">หมวดข้อมูล</span>
+          {populatedSections.map((section, index) => (
+            <a
+              key={section.title}
+              href={`#asset-section-${index + 1}`}
+              className="shrink-0 rounded-sm px-2.5 py-1.5 text-slate-600 transition-colors hover:bg-brand-weak/35 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40"
+            >
+              {SECTION_TITLES[section.title] ?? section.title}
+            </a>
+          ))}
+        </nav>
+      )}
 
-      <p className="text-xs text-slate-400">
-        เพิ่มโดย {a.createdBy?.displayName ?? "-"} · อัปเดตล่าสุด {fmtDateTime(a.updatedAt)}
-      </p>
+      <article className="overflow-hidden rounded-md border border-border bg-white shadow-sm">
+        <dl aria-label="สรุปข้อมูลเครื่อง" className="grid bg-sidebar sm:grid-cols-2 xl:grid-cols-4">
+          {summary.map((item, index) => (
+            <div
+              key={item.label}
+              className={`px-5 py-4 ${index > 0 ? "border-t border-white/10 sm:border-t-0 sm:border-l" : ""}`}
+            >
+              <dt className="text-xs font-medium text-white/70">{item.label}</dt>
+              <dd className="mt-1 min-h-10 break-words text-sm font-semibold leading-5 text-white" title={item.value}>
+                {item.statusKey ? <span className={assetStatusClass(item.statusKey)}>{item.value}</span> : item.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        {populatedSections.length === 0 && (
+          <div className="flex flex-col items-start gap-3 border-t border-border bg-surface-subtle px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div>
+              <p className="text-sm font-medium text-slate-800">ยังไม่มีรายละเอียดทางเทคนิคเพิ่มเติม</p>
+              <p className="mt-1 text-xs text-muted">เพิ่มสเปก อุปกรณ์ต่อพ่วง และข้อมูลเครือข่ายเพื่อให้ทะเบียนเครื่องสมบูรณ์ขึ้น</p>
+            </div>
+            <ButtonLink href={`/assets/${asset.id}/edit`} variant="secondary" size="sm" className="shrink-0">
+              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+              เพิ่มรายละเอียด
+            </ButtonLink>
+          </div>
+        )}
+
+        {populatedSections.map((section, sectionIndex) => (
+          <section
+            key={section.title}
+            id={`asset-section-${sectionIndex + 1}`}
+            aria-labelledby={`asset-section-heading-${sectionIndex + 1}`}
+            className="grid scroll-mt-24 border-t border-border first:border-t-0 lg:grid-cols-[14rem_minmax(0,1fr)]"
+          >
+            <header className="bg-slate-50/80 px-5 py-4 lg:border-r lg:border-border lg:px-6 lg:py-5">
+              <h2 id={`asset-section-heading-${sectionIndex + 1}`} className="border-l-2 border-brand pl-3 text-sm font-semibold text-slate-900">
+                {SECTION_TITLES[section.title] ?? section.title}
+              </h2>
+              <p className="mt-1 pl-[0.875rem] text-xs text-muted">
+                {section.fields.length} รายการ
+              </p>
+            </header>
+
+            <dl className="grid gap-x-8 gap-y-5 px-5 py-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 xl:px-7">
+              {section.fields.map((field) => {
+                const value = values[field.key];
+                return (
+                  <div key={field.key} className={field.type === "textarea" ? "sm:col-span-2" : undefined}>
+                    <dt className="text-xs font-medium text-muted">{field.label}</dt>
+                    <dd className="mt-1 break-words whitespace-pre-wrap text-sm font-medium text-slate-800">
+                      {optionLabel(field.key, value)}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </section>
+        ))}
+
+        <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-slate-50/60 px-5 py-3 text-xs text-muted sm:px-6">
+          <span>
+            แสดงข้อมูลที่บันทึกแล้ว {populatedCount} จาก {allFields.length} ช่อง
+          </span>
+          <span>
+            เพิ่มโดย {asset.createdBy?.displayName ?? "ไม่ระบุ"} · อัปเดตล่าสุด {fmtDateTime(asset.updatedAt)}
+          </span>
+        </footer>
+      </article>
     </div>
   );
 }
 
-void SITES;
+function assetStatusClass(status: string) {
+  if (status === "ใช้งาน") return "inline-flex rounded-md bg-emerald-400/20 px-2 py-1 text-sm text-emerald-100 ring-1 ring-inset ring-emerald-200/30";
+  if (status === "ไม่ได้ใช้งาน") return "inline-flex rounded-md bg-slate-300/20 px-2 py-1 text-sm text-slate-100 ring-1 ring-inset ring-white/20";
+  return "inline-flex rounded-md bg-amber-300/20 px-2 py-1 text-sm text-amber-100 ring-1 ring-inset ring-amber-200/30";
+}

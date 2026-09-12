@@ -55,7 +55,7 @@ export default async function NewTicketPage({
     <div className="w-full">
       <Link
         href="/"
-        className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-muted transition-colors hover:text-brand"
+        className="mb-4 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted transition-colors hover:bg-brand-weak/40 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
       >
         <ArrowLeft size={14} aria-hidden="true" />
         กลับไปเลือกบริการ
@@ -69,8 +69,8 @@ export default async function NewTicketPage({
           pdf ? (
             <a
               href={docUrls(def.code).download}
-              target="_blank"
-              rel="noreferrer"
+              download
+              aria-label={`ดาวน์โหลดแบบฟอร์มกระดาษ ${def.shortTitle}`}
               className={buttonClass({ variant: "secondary", size: "sm" })}
             >
               <Download size={14} aria-hidden="true" />

@@ -2,8 +2,8 @@ import { Skeleton } from "@/components/Skeleton";
 
 export default function Loading() {
   return (
-    <div className="space-y-5" aria-busy="true" aria-label="กำลังโหลดรายละเอียดคำร้อง">
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
+    <div role="status" className="space-y-5" aria-busy="true" aria-live="polite" aria-label="กำลังโหลดรายละเอียดคำร้อง">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5 sm:items-end">
         <div className="space-y-2">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-7 w-44" />

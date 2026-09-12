@@ -19,7 +19,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-border pb-4",
+        "mb-5 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-border pb-4 sm:items-end",
         className,
       )}
     >
@@ -40,7 +40,7 @@ export function PageHeader({
         </h1>
         {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
       </div>
-      {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end">{actions}</div>}
     </header>
   );
 }

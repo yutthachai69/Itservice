@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "./db";
 import {
   profileFromGraph,
@@ -9,6 +10,30 @@ import {
 
 const COOKIE = "uid";
 const DEFAULT_SITE = "02"; // TUSM — fallback when directory office/company doesn't map
+if (process.env.NODE_ENV === "production" && !process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET must be configured in production");
+}
+const SESSION_SECRET = process.env.SESSION_SECRET || "dev-only-session-secret-change-me";
+
+function sessionSignature(userId: number) {
+  return createHmac("sha256", SESSION_SECRET).update(String(userId)).digest("base64url");
+}
+
+export function sessionCookieValue(userId: number) {
+  return `${userId}.${sessionSignature(userId)}`;
+}
+
+function sessionUserId(raw: string | undefined) {
+  if (!raw) return NaN;
+  const [idPart, signature] = raw.split(".");
+  const id = Number(idPart);
+  if (!Number.isInteger(id) || !signature) return NaN;
+  const expected = sessionSignature(id);
+  const actualBytes = Buffer.from(signature);
+  const expectedBytes = Buffer.from(expected);
+  if (actualBytes.length !== expectedBytes.length || !timingSafeEqual(actualBytes, expectedBytes)) return NaN;
+  return id;
+}
 
 export type SessionUser = {
   id: number;
@@ -26,7 +51,7 @@ export type SessionUser = {
 export async function getCurrentUser(): Promise<SessionUser | null> {
   const jar = await cookies();
   const raw = jar.get(COOKIE)?.value;
-  const id = raw ? Number(raw) : NaN;
+  const id = sessionUserId(raw);
   if (!Number.isInteger(id)) return null;
 
   const u = await prisma.user.findUnique({
@@ -57,9 +82,10 @@ export async function requireUser(): Promise<SessionUser> {
 
 export async function setSession(userId: number) {
   const jar = await cookies();
-  jar.set(COOKIE, String(userId), {
+  jar.set(COOKIE, sessionCookieValue(userId), {
     httpOnly: true,
     sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 60 * 60 * 12,
   });

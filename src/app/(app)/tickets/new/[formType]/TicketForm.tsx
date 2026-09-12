@@ -981,7 +981,13 @@ function WorkFunctionPairs({
  * than implying completeness, and always points back at the full download.
  */
 function SoftproGuidelineHint({ workFunction }: { workFunction: string }) {
-  const screens = SOFTPRO_GUIDELINE[workFunction];
+  const raw = SOFTPRO_GUIDELINE[workFunction];
+  // multiple screen codes can share the same displayed name+module (e.g. the
+  // same "สถานะระบบ" screen re-used across PR/IC/WG) — collapse those since
+  // the code column (the only thing that distinguished them) is now hidden.
+  const screens = raw
+    ? Array.from(new Map(raw.map((s) => [`${s.name}|${s.module}`, s])).values())
+    : raw;
   return (
     <div className="mt-3 rounded-md border border-border bg-card p-3">
       <p className="text-xs font-semibold text-slate-600">
@@ -992,15 +998,13 @@ function SoftproGuidelineHint({ workFunction }: { workFunction: string }) {
           <table className="w-full text-left text-xs">
             <thead className="sticky top-0 bg-surface-subtle text-[11px] text-muted">
               <tr>
-                <th className="px-2 py-1.5 font-medium">โค้ด</th>
                 <th className="px-2 py-1.5 font-medium">ชื่อหน้าจอ</th>
                 <th className="px-2 py-1.5 font-medium">โมดูล</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {screens.map((s, i) => (
-                <tr key={`${s.code}-${s.module}-${i}`}>
-                  <td className="px-2 py-1 font-mono text-[11px] text-slate-700">{s.code}</td>
+                <tr key={`${s.name}-${s.module}-${i}`}>
                   <td className="px-2 py-1 text-slate-700">{s.name || "—"}</td>
                   <td className="px-2 py-1 text-slate-500">{s.module || "—"}</td>
                 </tr>

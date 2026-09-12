@@ -6,6 +6,7 @@ import {
   MonitorCog,
   PackageCheck,
   ShieldCheck,
+  UserCog,
   Video,
 } from "lucide-react";
 import { FORM_DEFS } from "./form-defs";
@@ -34,6 +35,7 @@ export const DESC: Record<string, string> = {
   F10: "ขอเปิด/ยกเลิกสิทธิ์เข้าใช้งานระบบ IT (User, ไดรฟ์แชร์, เครื่องปริ้น…)",
   F11: "ขอเปลี่ยน/รีเซ็ตรหัสผ่านคอมพิวเตอร์ อีเมล หรือระบบงาน",
   F12: "ขอเตรียมระบบประชุม/อบรมออนไลน์ (Teams / Zoom / Google Meet)",
+  F13: "ขอสิทธิ์/ปรับปรุงสิทธิ์การใช้งานระบบ ERP Softpro",
 };
 
 // same icon per form code everywhere it's shown (sidebar service list, home
@@ -47,6 +49,7 @@ export const SERVICE_ICON: Record<string, LucideIcon> = {
   F12: Video,
   F07: DatabaseZap,
   F02: PackageCheck,
+  F13: UserCog,
 };
 
 // the uploaded PDFs for these codes have overlapping/broken text boxes baked

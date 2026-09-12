@@ -9,6 +9,7 @@ const SERVICES = [
   { code: "F06", href: "/tickets/new/F06", label: "แจ้งปัญหา IT" },
   { code: "F11", href: "/tickets/new/F11", label: "แก้ไขรหัสผ่าน" },
   { code: "F10", href: "/tickets/new/F10", label: "ขอสิทธิ์ใช้งานระบบ" },
+  { code: "F13", href: "/tickets/new/F13", label: "ขอสิทธิ์ Softpro" },
   { code: "F03", href: "/tickets/new/F03", label: "ขอยืมอุปกรณ์" },
   { code: "F12", href: "/tickets/new/F12", label: "ขอจัดประชุมออนไลน์" },
   { code: "F07", href: "/tickets/new/F07", label: "ขอแก้ไขข้อมูลระบบ" },

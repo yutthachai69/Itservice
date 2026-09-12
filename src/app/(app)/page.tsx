@@ -28,13 +28,14 @@ const SERVICE_META: Record<string, { title: string; description: string }> = {
   F06: { title: "แจ้งปัญหา IT", description: "คอมพิวเตอร์ โปรแกรม อินเทอร์เน็ต หรืออุปกรณ์มีปัญหา" },
   F11: { title: "แก้ไขรหัสผ่าน", description: "รีเซ็ตรหัสผ่านคอมพิวเตอร์ อีเมล หรือระบบงาน" },
   F10: { title: "ขอสิทธิ์ใช้งานระบบ", description: "เพิ่ม เปลี่ยน หรือยกเลิกสิทธิ์ระบบ" },
+  F13: { title: "ขอสิทธิ์ Softpro", description: "ขอ/ปรับปรุงสิทธิ์การใช้งานระบบ ERP Softpro" },
   F03: { title: "ขอยืมอุปกรณ์", description: "โน้ตบุ๊ก โปรเจกเตอร์ จอมอนิเตอร์ และอุปกรณ์เสริม" },
   F12: { title: "ขอจัดประชุมออนไลน์", description: "เตรียมระบบ Video Conference สำหรับประชุมหรืออบรม" },
   F07: { title: "ขอแก้ไขข้อมูลในระบบ", description: "เปลี่ยนแปลงข้อมูลในระบบงานที่ใช้อยู่" },
   F02: { title: "ส่งมอบคอมพิวเตอร์", description: "บันทึกการส่งมอบอุปกรณ์ให้ผู้รับ" },
 };
 
-const SERVICE_ORDER = ["F06", "F11", "F10", "F03", "F12", "F07"];
+const SERVICE_ORDER = ["F06", "F11", "F10", "F13", "F03", "F12", "F07"];
 
 export default async function HomePage() {
   const user = await getCurrentUser();

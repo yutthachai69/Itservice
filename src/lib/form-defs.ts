@@ -421,7 +421,141 @@ const F03: FormDef = {
   ],
 };
 
-export const FORM_DEFS: Record<string, FormDef> = { F02, F03, F06, F07, F10, F11, F12 };
+// ---- F13  (ERP Softpro access request) --------------------------------
+// Modeled on the legacy standalone system at permissionrequest.tsmgroup.local
+// ("แบบฟอร์มขอสิทธิ์มาตรฐาน") — kept as its own form rather than folded into
+// F10 because the fields (work-function areas, PR approval order, Division
+// factory/office codes) are Softpro-specific and don't fit F10's generic
+// "items" checklist. Two fields are simplified from the legacy page rather
+// than reproduced exactly:
+//  - the legacy "User Level" dropdown per ฟังก์ชั่นงาน is populated by an
+//    AJAX postback keyed to the selected work function, so its real option
+//    values aren't visible in static markup — collected as free text instead.
+//  - "Division" was a checkbox grid (site x โรงงาน/สำนักงาน/กรุงเทพฯ) — kept
+//    as checkboxes with the legacy value codes, e.g. "TKSM(MG)".
+const WORK_FUNCTION_OPTIONS = [
+  { value: "งาน-ทั่วไป", label: "งาน-ทั่วไป (แนะนำ)" },
+  { value: "งาน-IT Config", label: "งาน-IT Config" },
+  { value: "งาน-จัดซื้อ", label: "งาน-จัดซื้อ" },
+  { value: "งาน-บัญชี", label: "งาน-บัญชี" },
+  { value: "งาน-การเงิน", label: "งาน-การเงิน" },
+  { value: "งาน-ขาย", label: "งาน-ขาย" },
+  { value: "งาน-ฝ่ายไร่", label: "งาน-ฝ่ายไร่" },
+  { value: "งาน-PR Memo", label: "งาน-PR Memo" },
+  { value: "งาน-คลังพัสดุ", label: "งาน-คลังพัสดุ" },
+  { value: "งาน-คลังสินค้า", label: "งาน-คลังสินค้า" },
+  { value: "งาน-งบประมาณ", label: "งาน-งบประมาณ" },
+  { value: "งาน-ข้อมูลเกษตรกร", label: "งาน-ข้อมูลเกษตรกร" },
+  { value: "งาน-สำรวจพื้นที่และขอส่งเสริม", label: "งาน-สำรวจพื้นที่และขอส่งเสริม" },
+  { value: "งาน-เกี๊ยว", label: "งาน-เกี๊ยว" },
+  { value: "งาน-เบิกจ่ายวัตถุดิบ", label: "งาน-เบิกจ่ายวัตถุดิบ" },
+  { value: "งาน-ติดตามหนี้", label: "งาน-ติดตามหนี้" },
+  { value: "งาน-สินเชื่อ", label: "งาน-สินเชื่อ" },
+  { value: "งาน-คำนวนและจ่ายเช็ค", label: "งาน-คำนวนและจ่ายเช็ค" },
+  { value: "งาน-บันทึกค่า CCS และการปรับค่า", label: "งาน-บันทึกค่า CCS และการปรับค่า" },
+  { value: "งาน-สรุปปิดหีบ", label: "งาน-สรุปปิดหีบ" },
+  { value: "งาน-ห้องชั่ง", label: "งาน-ห้องชั่ง" },
+  { value: "ผู้ปฏิบัติงาน-คิว / บัตรคิว", label: "ผู้ปฏิบัติงาน-คิว / บัตรคิว" },
+  { value: "งาน-จ่ายน้ำมัน", label: "งาน-จ่ายน้ำมัน" },
+  { value: "งาน-ติดตามหนี้(AP)", label: "งาน-ติดตามหนี้(AP)" },
+  { value: "งาน-ควบคุมการจ่ายเงิน(AP)", label: "งาน-ควบคุมการจ่ายเงิน(AP)" },
+  { value: "งาน-ควบคุมเงินสดย่อย(AP)", label: "งาน-ควบคุมเงินสดย่อย(AP)" },
+];
+
+function workFunctionField(n: 1 | 2 | 3 | 4 | 5): FieldDef {
+  return {
+    key: `workFunction${n}`,
+    label: `ฟังก์ชั่นงานที่ ${n}`,
+    type: "select",
+    required: n === 1,
+    colSpan: 1,
+    options: WORK_FUNCTION_OPTIONS,
+  };
+}
+
+const F13: FormDef = {
+  type: "F13",
+  code: "F13",
+  title: "แบบฟอร์มขอสิทธิ์ระบบ ERP Softpro",
+  shortTitle: "ขอสิทธิ์ Softpro",
+  slaHours: 16,
+  initialUserStatus: "รอตรวจสอบ/อนุมัติ",
+  sections: [
+    requesterSection,
+    {
+      title: "ฟังก์ชั่นงานที่ขอสิทธิ์",
+      fields: [
+        { key: "reqNameEn", label: "ชื่อภาษาอังกฤษ (Name-Lastname)", type: "text", colSpan: 2, maxLength: 100 },
+        workFunctionField(1),
+        workFunctionField(2),
+        workFunctionField(3),
+        workFunctionField(4),
+        workFunctionField(5),
+        {
+          key: "userLevel",
+          label: "ระดับสิทธิ์ที่ต้องการ (User Level) ต่อฟังก์ชั่นงาน",
+          type: "textarea",
+          required: true,
+          colSpan: 2,
+          help: "ระบุ User Level ที่ต้องการของแต่ละฟังก์ชั่นงานที่เลือกด้านบน เช่น “งาน-จัดซื้อ: User”",
+        },
+      ],
+    },
+    {
+      title: "สิทธิ์อนุมัติ (PR) และหน่วยงาน",
+      fields: [
+        {
+          key: "prApprovalOrder",
+          label: "ลำดับ Y ในการอนุมัติ (PR)",
+          type: "select",
+          colSpan: 1,
+          options: [
+            { value: "Y1", label: "Y1" },
+            { value: "Y2", label: "Y2" },
+            { value: "Y3", label: "Y3" },
+          ],
+        },
+        { key: "prApprovalLimit", label: "วงเงินอนุมัติ (PR)", type: "text", maxLength: 14, colSpan: 1, placeholder: "พิมพ์จำนวนเงิน" },
+        serviceSiteField,
+        {
+          key: "division",
+          label: "บริษัทที่ปฏิบัติงาน (Division)",
+          type: "checkboxes",
+          required: true,
+          colSpan: 2,
+          help: "เลือกได้มากกว่า 1 หน่วยงาน — โรงงาน / สำนักงาน หรือกรุงเทพฯ ตามหน่วยที่ปฏิบัติงานจริง",
+          options: [
+            { value: "TKSM(MG)", label: "TKSM · โรงงาน (MG)" },
+            { value: "TKSMBKK(HG)", label: "TKSM · สำนักงาน/กรุงเทพฯ (HG)" },
+            { value: "TKP(MI)", label: "TKP · โรงงาน (MI)" },
+            { value: "TKPBKK(HI)", label: "TKP · สำนักงาน/กรุงเทพฯ (HI)" },
+            { value: "TKP2(MJ)", label: "TKP2 · โรงงาน (MJ)" },
+            { value: "TKP2BKK(HJ)", label: "TKP2 · สำนักงาน/กรุงเทพฯ (HJ)" },
+            { value: "TSE(MN)", label: "TSE · โรงงาน (MN)" },
+            { value: "TSEBKK(HN)", label: "TSE · สำนักงาน/กรุงเทพฯ (HN)" },
+            { value: "TTSM(MA)", label: "TTSM · โรงงาน (MA)" },
+            { value: "TTSMBKK(HA)", label: "TTSM · สำนักงาน/กรุงเทพฯ (HA)" },
+            { value: "TSMB(MS)", label: "TSMB · โรงงาน (MS)" },
+            { value: "TSMBBKK(HS)", label: "TSMB · สำนักงาน/กรุงเทพฯ (HS)" },
+            { value: "TSMB2012(MT)", label: "TSMB2012 · โรงงาน (MT)" },
+            { value: "TSMB2012BKK(HT)", label: "TSMB2012 · สำนักงาน/กรุงเทพฯ (HT)" },
+            { value: "TUSM(UD)", label: "TUSM · โรงงาน (UD)" },
+            { value: "TUSMBKK(HO)", label: "TUSM · สำนักงาน/กรุงเทพฯ (HO)" },
+            { value: "TUP(MC)", label: "TUP · โรงงาน (MC)" },
+            { value: "TUPBKK(HC)", label: "TUP · สำนักงาน/กรุงเทพฯ (HC)" },
+          ],
+        },
+        { key: "notes", label: "หมายเหตุ", type: "textarea", colSpan: 2 },
+      ],
+    },
+  ],
+  approvals: [
+    { step: "CHECK", label: "ผู้ตรวจสอบ", approverType: "IT", fieldKey: "approverCheck" },
+    { step: "APPROVE", label: "ผู้อนุมัติให้สิทธิ์", approverType: "IT", fieldKey: "approverApprove" },
+  ],
+};
+
+export const FORM_DEFS: Record<string, FormDef> = { F02, F03, F06, F07, F10, F11, F12, F13 };
 export const FORM_LIST = Object.values(FORM_DEFS);
 export const getFormDef = (t: string): FormDef | undefined => FORM_DEFS[t];
 

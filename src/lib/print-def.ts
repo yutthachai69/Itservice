@@ -141,6 +141,17 @@ export const PRINT_DEFS: Record<string, PrintDef> = {
     approvalNote:
       "หมายเหตุ ผู้ขอสิทธิ์ใช้งาน = หน.แผนก/หน.ส่วน หรือผู้ที่มีตำแหน่งสูงกว่าผู้ได้รับสิทธิ์ในการขอ, ผู้ตรวจสอบ = ผู้จัดการฝ่าย, ผู้อนุมัติให้สิทธิ์ = COO/CFO, กรรมการผู้จัดการ, ประธานกรรมการ/CEO",
   },
+  F13: {
+    title: "แบบฟอร์มขอสิทธิ์ระบบ ERP Softpro",
+    docCode: "IT01-IT-F13",
+    layout: "approval",
+    checkboxField: "division",
+    reasonField: "userLevel",
+    reasonLabel: "ระดับสิทธิ์ที่ต้องการ (User Level) ต่อฟังก์ชั่นงาน",
+    userSignature: "ผู้ขอสิทธิ์ Softpro",
+    itBoxSignatures: ["ผู้อนุมัติให้สิทธิ์", "ผู้ดำเนินการ"],
+    approvalNote: "หมายเหตุ อ้างอิงจากระบบขอสิทธิ์ ERP Softpro เดิม — ผู้ตรวจสอบ/ผู้อนุมัติกำหนดตามสายงานของหน่วยงานที่ปฏิบัติงาน",
+  },
 };
 
 export const getPrintDef = (t: string): PrintDef =>

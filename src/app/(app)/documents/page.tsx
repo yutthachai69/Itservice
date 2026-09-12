@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { FORM_DEFS } from "@/lib/form-defs";
 import { listFormFiles } from "@/lib/form-files";
@@ -6,8 +7,10 @@ import { docThumb } from "@/lib/doc-thumbs";
 import { titleFor, DESC, SERVICE_ICON, REGENERATED, docUrls } from "@/lib/doc-meta";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { Pill } from "@/components/Badge";
 import { Button, ButtonLink } from "@/components/Button";
 import { Download, Eye, FileText } from "lucide-react";
+import { cn } from "@/lib/ui";
 
 // real names/descriptions not confirmed yet — flagged in the UI instead of
 // left blank so it's clear the card is incomplete, not broken
@@ -20,6 +23,14 @@ function humanSize(n: number) {
 }
 
 type SP = Record<string, string | undefined>;
+type FilterKey = "all" | "forms" | "others" | "inprogress";
+
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: "all", label: "ทั้งหมด" },
+  { key: "forms", label: "สร้างคำร้องออนไลน์" },
+  { key: "others", label: "เอกสาร PDF" },
+  { key: "inprogress", label: "อยู่ระหว่างปรับปรุง" },
+];
 
 export default async function DocumentsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const user = await getCurrentUser();
@@ -27,16 +38,38 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
 
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
+  const filter: FilterKey = FILTERS.some((f) => f.key === sp.filter) ? (sp.filter as FilterKey) : "all";
   const files = listFormFiles();
   const appCodes = new Set(Object.keys(FORM_DEFS));
-  const filteredFiles = q
+  const searchedFiles = q
     ? files.filter((file) => {
         const haystack = [file.code, titleFor(file.code), DESC[file.code] ?? ""].join(" ").toLocaleLowerCase();
         return haystack.includes(q.toLocaleLowerCase());
       })
     : files;
+
+  const filterCounts: Record<FilterKey, number> = {
+    all: searchedFiles.length,
+    forms: searchedFiles.filter((f) => appCodes.has(f.code)).length,
+    others: searchedFiles.filter((f) => !appCodes.has(f.code)).length,
+    inprogress: searchedFiles.filter((f) => PLACEHOLDER_NAME.has(f.code)).length,
+  };
+  const filteredFiles = searchedFiles.filter((f) => {
+    if (filter === "forms") return appCodes.has(f.code);
+    if (filter === "others") return !appCodes.has(f.code);
+    if (filter === "inprogress") return PLACEHOLDER_NAME.has(f.code);
+    return true;
+  });
   const forms = filteredFiles.filter((f) => appCodes.has(f.code));
   const others = filteredFiles.filter((f) => !appCodes.has(f.code));
+
+  const chipHref = (key: FilterKey) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (key !== "all") params.set("filter", key);
+    const qs = params.toString();
+    return qs ? `/documents?${qs}` : "/documents";
+  };
 
   return (
     <div className="space-y-8">
@@ -56,9 +89,37 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
             className="control w-full px-3"
           />
         </label>
+        {filter !== "all" && <input type="hidden" name="filter" value={filter} />}
         <Button type="submit" className="w-full sm:w-auto">ค้นหา</Button>
-        {q && <ButtonLink href="/documents" variant="secondary" size="md" className="w-full sm:w-auto">ล้างตัวกรอง</ButtonLink>}
+        {(q || filter !== "all") && (
+          <ButtonLink href="/documents" variant="secondary" size="md" className="w-full sm:w-auto">ล้างตัวกรอง</ButtonLink>
+        )}
       </form>
+
+      {files.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {FILTERS.map((f) => {
+            const active = filter === f.key;
+            const count = filterCounts[f.key];
+            return (
+              <Link
+                key={f.key}
+                href={chipHref(f.key)}
+                aria-current={active ? "true" : undefined}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1",
+                  active
+                    ? "border-brand bg-brand text-white"
+                    : "border-border-strong bg-card text-muted hover:border-brand/40 hover:text-brand",
+                )}
+              >
+                {f.label}
+                <span className={cn("tabular-nums", active ? "text-white/75" : "text-slate-400")}>{count}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {files.length > 0 && (
         <p role="status" aria-live="polite" className="text-xs text-muted">
@@ -75,8 +136,8 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
       ) : filteredFiles.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title="ไม่พบเอกสารที่ตรงกับคำค้น"
-          hint="ลองค้นด้วยรหัส F02, F03 หรือชื่อบริการ แล้วลองอีกครั้ง"
+          title="ไม่พบเอกสารที่ตรงกับตัวกรอง"
+          hint="ลองเปลี่ยนตัวกรอง หรือค้นด้วยรหัส F02, F03 แล้วลองอีกครั้ง"
           cta={{ href: "/documents", label: "ล้างตัวกรอง" }}
         />
       ) : (
@@ -189,10 +250,10 @@ function DocGroup({
                       <span className="text-[11px] text-slate-400">PDF · {humanSize(f.bytes)}</span>
                     )
                   )}
-                  {PLACEHOLDER_NAME.has(f.code) && (
-                    <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700">
-                      ชื่อชั่วคราว
-                    </span>
+                  {PLACEHOLDER_NAME.has(f.code) ? (
+                    <Pill tone="amber">อยู่ระหว่างปรับปรุง</Pill>
+                  ) : (
+                    <Pill tone="green">พร้อมใช้งาน</Pill>
                   )}
                 </span>
               </a>

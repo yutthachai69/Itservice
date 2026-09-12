@@ -120,6 +120,10 @@ export default async function TicketDetailPage({
   );
   if (ticket.note) formDetails.push({ label: "หมายเหตุ", value: ticket.note, wide: true });
 
+  // ticket is still moving — the "ปัจจุบัน" status card gets a live pulse
+  // instead of a plain dot; a closed/cancelled ticket isn't "live" anymore
+  const isLive = ticket.status !== "CLOSED" && ticket.status !== "CANCELLED";
+
   const statusSummary = [
     {
       icon: CircleDot,
@@ -240,7 +244,14 @@ export default async function TicketDetailPage({
                   {item.current && <span className="rounded-sm bg-brand px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">ปัจจุบัน</span>}
                 </dt>
                   <dd className={cn("mt-0.5 flex min-w-0 items-center gap-2 break-words text-[15px] font-semibold leading-5", item.current ? "text-current" : item.alert ? "text-red-700" : "text-slate-900")}>
-                  {item.current && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />}
+                  {item.current && (
+                    <span className="relative flex h-1.5 w-1.5 shrink-0" aria-hidden="true">
+                      {isLive && (
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-75 motion-reduce:hidden" />
+                      )}
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-current" />
+                    </span>
+                  )}
                    <span className="line-clamp-2">{item.value}</span>
                 </dd>
                 {item.meta && (

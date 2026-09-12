@@ -109,7 +109,120 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
         </div>
       </div>
 
-      {p.layout === "boxed" ? (
+      {p.layout === "softpro" ? (
+        <>
+          {/* ── softpro layout (F13) — mirrors the real paper form's single wide row ── */}
+          <table className="ptbl mt-2 text-[10px]">
+            <thead>
+              <tr>
+                <th className="cell text-left">ชื่อ-นามสกุล</th>
+                <th className="cell text-left">แผนก</th>
+                <th className="cell text-left">ตำแหน่ง</th>
+                <th className="cell text-left">
+                  สังกัด
+                  <br />
+                  (ชื่อย่อ)
+                </th>
+                <th className="cell text-left">
+                  บริษัทที่ปฏิบัติงาน
+                  <br />
+                  (Division)
+                </th>
+                <th className="cell text-left">Transection</th>
+                <th className="cell text-left">UserLevel</th>
+                <th className="cell text-left">หมายเหตุ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="cell tall align-top">
+                  <div>{blank ? "" : t.reqName}</div>
+                  {(blank || display("reqNameEn")) && (
+                    <div className="text-slate-500">{blank ? "" : display("reqNameEn")}</div>
+                  )}
+                </td>
+                <td className="cell tall align-top">{blank ? "" : t.reqDept ?? ""}</td>
+                <td className="cell tall align-top">{blank ? "" : t.reqPosition ?? ""}</td>
+                <td className="cell tall align-top">{blank ? "" : display("serviceSiteCode")}</td>
+                <td className="cell tall align-top">
+                  {!blank &&
+                    checkOptions
+                      .filter((o) => checked.has(o.value))
+                      .map((o) => <div key={o.value}>{o.label}</div>)}
+                </td>
+                <td className="cell tall align-top">
+                  {!blank &&
+                    [1, 2, 3, 4, 5]
+                      .map((n) => display(`workFunction${n}`))
+                      .filter(Boolean)
+                      .map((v, i) => <div key={i}>{v}</div>)}
+                </td>
+                <td className="cell tall align-top">
+                  {!blank &&
+                    [1, 2, 3, 4, 5]
+                      .map((n) => display(`userLevel${n}`))
+                      .filter(Boolean)
+                      .map((v, i) => <div key={i}>{v}</div>)}
+                </td>
+                <td className="cell tall whitespace-pre-wrap align-top">{blank ? "" : t.note ?? ""}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="mt-2 flex gap-8 text-[11px]">
+            <div>
+              ลำดับ Y <span className="fld inline-block min-w-[20mm]">{blank ? "" : display("prApprovalOrder")}</span>
+            </div>
+            <div>
+              วงเงินอนุมัติ(PR){" "}
+              <span className="fld inline-block min-w-[30mm]">{blank ? "" : display("prApprovalLimit")}</span>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-between gap-6 text-[11px]">
+            <div className="flex-1 text-center">
+              <div className="sig" />
+              <div>( {blank ? "" : t.reqName} )</div>
+              <div className="text-slate-600">{p.userSignature}</div>
+            </div>
+            {(!blank && t.approvals.length > 0
+              ? t.approvals.map((a) => ({
+                  name: a.approver?.name ?? "",
+                  role: a.step === "CHECK" ? "ผู้ตรวจสอบ" : "ผู้อนุมัติ",
+                }))
+              : [
+                  { name: "", role: "ผู้ตรวจสอบ" },
+                  { name: "", role: "ผู้อนุมัติ" },
+                ]
+            ).map((s, i) => (
+              <div key={i} className="flex-1 text-center">
+                <div className="sig" />
+                <div>( {s.name} )</div>
+                <div className="text-slate-600">{s.role}</div>
+              </div>
+            ))}
+          </div>
+
+          {p.approvalNote && <p className="mt-2 whitespace-pre-line text-[9px] leading-snug">{p.approvalNote}</p>}
+
+          <div className="bx mt-3 p-2">
+            <div className="text-[12px] font-bold">ฝ่ายเทคโนโลยีสารสนเทศ รับงาน</div>
+            <div className="mt-4 flex gap-10 text-[11px]">
+              {(p.itBoxSignatures ?? []).map((role, i) => (
+                <div key={i} className="flex-1 text-center">
+                  <div className="sig" />
+                  <div>( ................................ )</div>
+                  <div className="text-slate-600">{role}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 text-[11px]">
+              บันทึกข้อความ/ความเห็น
+              <div className="fld mt-1 h-[10mm]" />
+            </div>
+          </div>
+        </>
+      ) : p.layout === "boxed" ? (
         <>
           {/* ── USER box ── */}
           <div className="bx mt-2 p-2">

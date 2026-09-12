@@ -1,12 +1,18 @@
 // Per-form print layout — mirrors the physical TSM paper forms (IT01-IT-Fxx).
 //
-// Two shapes:
+// Three shapes:
 //  - "boxed"    : F06 / F11 / F12 / F03 — a USER box + an IT box, each with a
 //                 two-column "detail | note" area and its own signature row.
 //  - "approval" : F07 / F10 — a detail box beside an approver signature column,
 //                 then a separate "ส่วนเทคโนโลยีสารสนเทศ" box.
+//  - "softpro"  : F13 — mirrors the real Softpro access-request paper form
+//                 exactly (a real filled-out copy, "20251001204 ... TUSM.pdf",
+//                 was used as the reference): one wide table row per request
+//                 (name/dept/position/สังกัด/Division/Transection/UserLevel/
+//                 note), ลำดับ Y + วงเงินอนุมัติ(PR) beneath it, then 3
+//                 requester-side signatures and a separate IT "รับงาน" box.
 
-export type PrintLayout = "boxed" | "approval";
+export type PrintLayout = "boxed" | "approval" | "softpro";
 
 export interface PrintDef {
   title: string;
@@ -142,29 +148,17 @@ export const PRINT_DEFS: Record<string, PrintDef> = {
       "หมายเหตุ ผู้ขอสิทธิ์ใช้งาน = หน.แผนก/หน.ส่วน หรือผู้ที่มีตำแหน่งสูงกว่าผู้ได้รับสิทธิ์ในการขอ, ผู้ตรวจสอบ = ผู้จัดการฝ่าย, ผู้อนุมัติให้สิทธิ์ = COO/CFO, กรรมการผู้จัดการ, ประธานกรรมการ/CEO",
   },
   F13: {
-    title: "แบบฟอร์มขอสิทธิ์ระบบ ERP Softpro",
+    title: "แบบคำขอสิทธิ์ / ปรับปรุง / ระงับ / ยกเลิก สิทธิ์การทำงานระบบ ERP ( Softpro )",
     docCode: "IT01-IT-F13",
-    layout: "approval",
+    layout: "softpro",
     checkboxField: "division",
-    userExtraFields: [
-      "workFunction1",
-      "userLevel1",
-      "workFunction2",
-      "userLevel2",
-      "workFunction3",
-      "userLevel3",
-      "workFunction4",
-      "userLevel4",
-      "workFunction5",
-      "userLevel5",
-      "prApprovalOrder",
-      "prApprovalLimit",
-    ],
-    reasonField: "notes",
     reasonLabel: "หมายเหตุ",
-    userSignature: "ผู้ขอสิทธิ์ Softpro",
-    itBoxSignatures: ["ผู้อนุมัติให้สิทธิ์", "ผู้ดำเนินการ"],
-    approvalNote: "หมายเหตุ อ้างอิงจากระบบขอสิทธิ์ ERP Softpro เดิม — ผู้ตรวจสอบ/ผู้อนุมัติกำหนดตามสายงานของหน่วยงานที่ปฏิบัติงาน",
+    userSignature: "ผู้ขอ",
+    itBoxSignatures: ["ดำเนินการโดย", "ผู้อนุมัติให้ดำเนินการ"],
+    approvalNote:
+      "หมายเหตุ ผู้ขอสิทธิ์ = หน.งาน/หน.แผนก/หน.ส่วน หรือผู้ที่มีตำแหน่งสูงกว่าผู้ได้รับสิทธิ์ในการขอ, ผู้ตรวจสอบ = ผู้จัดการฝ่าย, " +
+      "ผู้อนุมัติให้สิทธิ์ = ประธานเจ้าหน้าที่ฝ่ายปฏิบัติการ(COO)/ประธานเจ้าหน้าที่ฝ่ายการเงิน(CFO), กรรมการผู้จัดการ, ประธานกรรมการ/ประธานเจ้าหน้าที่บริหาร(CEO), " +
+      "ผู้อำนวยการโรงงาน,ผู้จัดการฝ่าย/ธุรโส\nUserLevel ผู้ใช้ข้อมูล(View/Print), ผู้ปฏิบัติงาน(View/Print/Append/Edit/Delete), ผู้อนุมัติ(View/Print/Approve/Reject/Void,Unapprove)",
   },
 };
 

@@ -764,9 +764,13 @@ export function TicketForm({
 }
 
 function inputCls(error?: string) {
+  // bg-surface-subtle (not bg-card/white) so a field reads as a distinct
+  // tappable box against the white section card instead of blending into
+  // it — plain white-on-white with only a hairline border was hard to scan
+  // on forms this dense. Focus lifts it to white (bg-card) to draw the eye.
   return cn(
-    "mt-1 min-h-10 w-full rounded-md border bg-card px-3 py-2 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-muted",
-    error ? "border-red-400" : "border-border",
+    "mt-1 min-h-10 w-full rounded-md border bg-surface-subtle px-3 py-2 text-sm outline-none transition-colors focus:border-brand focus:bg-card focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-border disabled:text-muted",
+    error ? "border-red-400" : "border-border-strong",
   );
 }
 
@@ -1084,7 +1088,7 @@ function Field({
                   ),
                   on
                     ? "border-brand bg-brand-weak font-medium text-brand"
-                    : "border-border-strong text-slate-600 hover:border-brand/40 hover:bg-brand-weak/40",
+                    : "border-border-strong bg-surface-subtle text-slate-600 hover:border-brand/40 hover:bg-brand-weak/40",
                 )}
               >
                 <input

@@ -35,6 +35,10 @@ these rules before introducing a new pattern.
 - Buttons use 32px, 40px, or 44px heights through the shared Button component.
 - Status badges are compact rounded rectangles rather than decorative pills.
 - Focus remains visible for keyboard users. Motion must never be required to understand state.
+- Form controls (input/select/textarea) fill with `--surface-subtle`, not white — a white field on a
+  white card only had a 1px border to separate it, which read as flat and hard to scan on dense
+  forms. Focus lifts the field to white (`--card`) plus the brand ring, so the active field is the
+  brightest thing on the page.
 
 ## Application shell
 

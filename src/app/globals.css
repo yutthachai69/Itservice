@@ -100,56 +100,61 @@ textarea::placeholder {
   box-shadow: 0 1px 2px rgb(15 42 79 / 0.04);
 }
 
-/* Shared form controls: one height, border and focus treatment across filters. */
+/* Shared form controls: one height, border and focus treatment across filters.
+   Filled with --surface-subtle (not white) so a control reads as a distinct
+   tappable field against a white .card instead of blending into it — a plain
+   white-on-white field with only a 1px near-white border was hard to scan on
+   dense forms. Focus lifts the field to white, the brighter state drawing
+   the eye to where input is happening. */
 @utility control {
   height: 2.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  background: var(--card);
+  background: var(--surface-subtle);
   color: var(--foreground);
   outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
 @utility control-lg {
   height: 2.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  background: var(--card);
+  background: var(--surface-subtle);
   color: var(--foreground);
   outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
 @utility control-select {
   height: 2.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  background: var(--card);
+  background: var(--surface-subtle);
   color: var(--foreground);
   padding-inline: 0.625rem;
   outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
 @utility control-select-compact {
   height: 2rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  background: var(--card);
+  background: var(--surface-subtle);
   color: var(--foreground);
   padding-inline: 0.5rem;
   outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
 @utility control-area {
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  background: var(--card);
+  background: var(--surface-subtle);
   color: var(--foreground);
   outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
 .control:focus,
@@ -158,6 +163,7 @@ textarea::placeholder {
 .control-select-compact:focus,
 .control-area:focus {
   border-color: var(--brand);
+  background: var(--card);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 15%, transparent);
 }
 
@@ -167,7 +173,7 @@ textarea::placeholder {
 .control-select-compact:disabled,
 .control-area:disabled {
   cursor: not-allowed;
-  background: var(--surface-subtle);
+  background: var(--border);
   color: var(--muted);
   opacity: 0.78;
 }

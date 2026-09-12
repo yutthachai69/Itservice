@@ -82,7 +82,17 @@ export default async function NewTicketPage({
         title={def.shortTitle}
         subtitle={DESC[def.code] ?? def.title}
         actions={
-          pdf ? (
+          def.type === "F13" ? (
+            <a
+              href="/guides/softpro-screen-codes.xlsx"
+              download
+              aria-label="ดาวน์โหลดรายชื่อโค้ดหน้าจอ Softpro ทั้งหมด (อ้างอิงจาก IT)"
+              className={buttonClass({ variant: "secondary", size: "sm" })}
+            >
+              <Download size={14} aria-hidden="true" />
+              รายชื่อโค้ดหน้าจอ Softpro
+            </a>
+          ) : pdf ? (
             <a
               href={docUrls(def.code).download}
               download

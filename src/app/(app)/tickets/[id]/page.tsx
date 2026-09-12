@@ -41,6 +41,16 @@ const REQUESTER_FIELDS = new Set([
   "serviceSiteCode",
 ]);
 
+// left-accent tone for the "current status" card — mirrors STATUS_COLOR's
+// groupings so the border matches the fill instead of always being blue
+const STATUS_ACCENT: Record<string, string> = {
+  OPEN: "border-l-amber-400",
+  IN_PROGRESS: "border-l-brand",
+  RESOLVED: "border-l-amber-400",
+  CLOSED: "border-l-slate-400",
+  CANCELLED: "border-l-slate-300",
+};
+
 export default async function TicketDetailPage({
   params,
   searchParams,
@@ -123,6 +133,10 @@ export default async function TicketDetailPage({
   // ticket is still moving — the "ปัจจุบัน" status card gets a live pulse
   // instead of a plain dot; a closed/cancelled ticket isn't "live" anymore
   const isLive = ticket.status !== "CLOSED" && ticket.status !== "CANCELLED";
+  // the "current status" card's left accent follows the same tone as its
+  // fill (STATUS_COLOR) instead of always being brand-blue regardless of
+  // what the status actually is
+  const statusAccent = STATUS_ACCENT[ticket.status] ?? "border-l-brand";
 
   const statusSummary = [
     {
@@ -223,7 +237,7 @@ export default async function TicketDetailPage({
                 className={cn(
                 "flex min-w-0 items-start gap-3 rounded-md border px-4 py-3.5",
                 item.current
-                  ? cn("border-l-4 border-l-brand shadow-sm ring-1", STATUS_COLOR[ticket.status] ?? "bg-brand-weak text-brand-strong ring-brand/20")
+                  ? cn("border-l-4 shadow-sm ring-1", statusAccent, STATUS_COLOR[ticket.status] ?? "bg-brand-weak text-brand-strong ring-brand/20")
                   : item.alert
                     ? "border-red-200 bg-red-50/55"
                     : "border-border bg-card",
@@ -245,11 +259,11 @@ export default async function TicketDetailPage({
                 </dt>
                   <dd className={cn("mt-0.5 flex min-w-0 items-center gap-2 break-words text-[15px] font-semibold leading-5", item.current ? "text-current" : item.alert ? "text-red-700" : "text-slate-900")}>
                   {item.current && (
-                    <span className="relative flex h-1.5 w-1.5 shrink-0" aria-hidden="true">
+                    <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
                       {isLive && (
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-75 motion-reduce:hidden" />
+                        <span className="absolute inline-flex h-full w-full animate-[ping_1.6s_cubic-bezier(0,0,0.2,1)_infinite] rounded-full bg-current opacity-60 motion-reduce:hidden" />
                       )}
-                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-current" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-current" />
                     </span>
                   )}
                    <span className="line-clamp-2">{item.value}</span>

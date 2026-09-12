@@ -119,7 +119,7 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
       {p.layout === "softpro" ? (
         <>
           {/* ── softpro layout (F13) — mirrors the real paper form's single wide row ── */}
-          <table className="ptbl mt-2 text-[10px]">
+          <table className="ptbl mt-2 w-full text-[10px]" style={{ tableLayout: "fixed" }}>
             <thead>
               <tr>
                 <th className="cell text-left">ชื่อ-นามสกุล</th>
@@ -176,7 +176,7 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
             </tbody>
           </table>
 
-          <div className="mt-2 flex gap-8 text-[11px]">
+          <div className="mt-2 flex w-full gap-8 text-[11px]">
             <div>
               ลำดับ Y <span className="fld inline-block min-w-[20mm]">{blank ? "" : display("prApprovalOrder")}</span>
             </div>
@@ -186,7 +186,7 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
             </div>
           </div>
 
-          <div className="mt-5 flex justify-between gap-6 text-[11px]">
+          <div className="mt-5 flex w-full justify-between gap-6 text-[11px]">
             <div className="flex-1 text-center">
               <div className="sig" />
               <div>( {blank ? "" : t.reqName} )</div>
@@ -210,9 +210,9 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
             ))}
           </div>
 
-          {p.approvalNote && <p className="mt-2 whitespace-pre-line text-[9px] leading-snug">{p.approvalNote}</p>}
+          {p.approvalNote && <p className="mt-2 w-full whitespace-pre-line text-[9px] leading-snug">{p.approvalNote}</p>}
 
-          <div className="bx mt-3 p-2">
+          <div className="bx mt-3 w-full p-2">
             <div className="text-[12px] font-bold">ฝ่ายเทคโนโลยีสารสนเทศ รับงาน</div>
             <div className="mt-4 flex gap-10 text-[11px]">
               {(p.itBoxSignatures ?? []).map((role, i) => (

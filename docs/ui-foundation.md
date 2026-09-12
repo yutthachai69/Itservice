@@ -60,10 +60,11 @@ these rules before introducing a new pattern.
 - Fields stack one per row, top to bottom — a 2-3 column field grid made the eye jump around instead
   of reading straight down, which read as more confusing than the plain single-column legacy paper
   forms it replaced.
-- The form card caps at `max-w-3xl` instead of stretching the full 1fr grid track, so the
-  single-column form doesn't look sparse next to the summary sidebar on a wide monitor. Within that
-  capped card, fields fill the full row width — an earlier pass also capped each field at `max-w-md`,
-  which just left dead space to the right of every field once the card itself was already capped.
+- The form card fills its full 1fr grid track and fields fill the full card width — two earlier
+  passes tried capping the card (`max-w-3xl`) and/or each field (`max-w-md`) to avoid a "sparse"
+  wide-screen look, but both just relocated the dead space (beside every field, or between the card
+  and the summary sidebar) rather than removing it. A field that fills its row has no dead space to
+  relocate.
 - Help and validation text stay next to their field and are connected with `aria-describedby`.
 - A single persistent footer holds cancellation and submission actions.
 - Context such as SLA, required-field count, and attachment limits appears once above the form.

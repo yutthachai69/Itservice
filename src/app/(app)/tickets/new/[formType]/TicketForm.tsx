@@ -376,10 +376,7 @@ export function TicketForm({
     <>
       <form onSubmit={submit} noValidate aria-busy={submitting || undefined} className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
       {submitting && <span role="status" className="sr-only">กำลังส่งคำร้อง กรุณารอสักครู่</span>}
-      {/* capped instead of stretching the full 1fr grid track — a full-width
-          card on a wide desktop monitor left the single-column form looking
-          sparse next to the summary sidebar */}
-      <div className="card min-w-0 max-w-3xl overflow-hidden">
+      <div className="card min-w-0 overflow-hidden">
       {formError && Object.keys(errors).length === 0 && (
         <p
           role="alert"

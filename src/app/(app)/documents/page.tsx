@@ -1,20 +1,38 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { FORM_DEFS } from "@/lib/form-defs";
+import { FORM_LIST } from "@/lib/form-defs";
 import { listFormFiles } from "@/lib/form-files";
 import { docThumb } from "@/lib/doc-thumbs";
 import { titleFor, DESC, SERVICE_ICON, REGENERATED, docUrls } from "@/lib/doc-meta";
-import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { Pill } from "@/components/Badge";
 import { Button, ButtonLink } from "@/components/Button";
-import { Download, Eye, FileText } from "lucide-react";
-import { cn } from "@/lib/ui";
+import { fmtDate, cn } from "@/lib/ui";
+import {
+  ArrowRight,
+  CircleCheck,
+  Download,
+  Eye,
+  FileText,
+  MoreHorizontal,
+} from "lucide-react";
 
 // real names/descriptions not confirmed yet — flagged in the UI instead of
 // left blank so it's clear the card is incomplete, not broken
 const PLACEHOLDER_NAME = new Set(["F08", "F15", "F16"]);
+
+// per the user's explicit direction this page keeps colored icon tiles for
+// the "create online" cards — a deliberate exception to the app-wide
+// monochrome-icon rule (docs/ui-foundation.md), scoped to this one section.
+const CARD_TONES = [
+  { bg: "bg-blue-50", text: "text-blue-600", ring: "ring-blue-100" },
+  { bg: "bg-teal-50", text: "text-teal-600", ring: "ring-teal-100" },
+  { bg: "bg-violet-50", text: "text-violet-600", ring: "ring-violet-100" },
+  { bg: "bg-indigo-50", text: "text-indigo-600", ring: "ring-indigo-100" },
+  { bg: "bg-amber-50", text: "text-amber-600", ring: "ring-amber-100" },
+  { bg: "bg-rose-50", text: "text-rose-600", ring: "ring-rose-100" },
+];
 
 function humanSize(n: number) {
   if (!n) return "";
@@ -40,28 +58,32 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   const q = (sp.q ?? "").trim();
   const filter: FilterKey = FILTERS.some((f) => f.key === sp.filter) ? (sp.filter as FilterKey) : "all";
   const files = listFormFiles();
-  const appCodes = new Set(Object.keys(FORM_DEFS));
-  const searchedFiles = q
-    ? files.filter((file) => {
-        const haystack = [file.code, titleFor(file.code), DESC[file.code] ?? ""].join(" ").toLocaleLowerCase();
-        return haystack.includes(q.toLocaleLowerCase());
-      })
-    : files;
+  const appCodes = new Set(FORM_LIST.map((f) => f.type));
+  const matchesQuery = (haystack: string) => !q || haystack.toLocaleLowerCase().includes(q.toLocaleLowerCase());
+
+  // "create online" cards are driven by FORM_LIST (every service the app
+  // offers), independent of whether IT has also uploaded a paper PDF for it —
+  // the download table below is driven by files actually in public/forms/.
+  const searchedForms = FORM_LIST.filter((f) => matchesQuery([f.type, f.shortTitle, DESC[f.type] ?? ""].join(" ")));
+  const searchedOtherFiles = files.filter(
+    (f) => !appCodes.has(f.code) && matchesQuery([f.code, titleFor(f.code), DESC[f.code] ?? ""].join(" ")),
+  );
 
   const filterCounts: Record<FilterKey, number> = {
-    all: searchedFiles.length,
-    forms: searchedFiles.filter((f) => appCodes.has(f.code)).length,
-    others: searchedFiles.filter((f) => !appCodes.has(f.code)).length,
-    inprogress: searchedFiles.filter((f) => PLACEHOLDER_NAME.has(f.code)).length,
+    all: searchedForms.length + searchedOtherFiles.length,
+    forms: searchedForms.length,
+    others: searchedOtherFiles.length,
+    inprogress: searchedOtherFiles.filter((f) => PLACEHOLDER_NAME.has(f.code)).length,
   };
-  const filteredFiles = searchedFiles.filter((f) => {
-    if (filter === "forms") return appCodes.has(f.code);
-    if (filter === "others") return !appCodes.has(f.code);
-    if (filter === "inprogress") return PLACEHOLDER_NAME.has(f.code);
-    return true;
-  });
-  const forms = filteredFiles.filter((f) => appCodes.has(f.code));
-  const others = filteredFiles.filter((f) => !appCodes.has(f.code));
+
+  const cardForms = filter === "all" || filter === "forms" ? searchedForms : [];
+  const others =
+    filter === "forms"
+      ? []
+      : filter === "inprogress"
+        ? searchedOtherFiles.filter((f) => PLACEHOLDER_NAME.has(f.code))
+        : searchedOtherFiles;
+  const showTable = others.length > 0;
 
   const chipHref = (key: FilterKey) => {
     const params = new URLSearchParams();
@@ -71,13 +93,40 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
     return qs ? `/documents?${qs}` : "/documents";
   };
 
+  const nothingToShow = cardForms.length === 0 && others.length === 0;
+
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="แบบฟอร์มเอกสาร"
-        subtitle="ดาวน์โหลดแบบฟอร์มกระดาษ (PDF) สำหรับกรอกด้วยมือหรือขอลายเซ็น"
-      />
+      {/* ── hero ── */}
+      <section className="grid gap-4 lg:grid-cols-[1fr_320px]">
+        <div>
+          <h1 className="text-xl font-semibold leading-tight tracking-[-0.015em] text-slate-950 sm:text-[1.375rem]">
+            แบบฟอร์มเอกสาร
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            ดาวน์โหลดเอกสาร (PDF) หรือสร้างคำร้องผ่านระบบออนไลน์ — ทุกอย่างที่ต้องใช้สำหรับงานบริการ IT
+          </p>
+        </div>
+        <div className="card flex flex-col gap-2 bg-brand-weak/40 p-4">
+          <p className="text-sm font-semibold text-slate-900">เอกสารและแบบฟอร์มครบ จบในที่เดียว</p>
+          <ul className="space-y-1 text-xs text-slate-600">
+            <li className="flex items-center gap-1.5">
+              <CircleCheck size={14} className="shrink-0 text-brand" aria-hidden="true" />
+              สร้างคำร้องออนไลน์ได้ทันที
+            </li>
+            <li className="flex items-center gap-1.5">
+              <CircleCheck size={14} className="shrink-0 text-brand" aria-hidden="true" />
+              ดาวน์โหลดเอกสารที่เกี่ยวข้อง
+            </li>
+            <li className="flex items-center gap-1.5">
+              <CircleCheck size={14} className="shrink-0 text-brand" aria-hidden="true" />
+              อัปเดตข้อมูลใหม่เสมอ
+            </li>
+          </ul>
+        </div>
+      </section>
 
+      {/* ── search + filters ── */}
       <form method="get" className="card flex flex-col gap-3 p-4 text-sm shadow-sm sm:flex-row sm:items-end">
         <label htmlFor="document-search" className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-600">
           ค้นหาเอกสาร
@@ -96,172 +145,168 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
         )}
       </form>
 
-      {files.length > 0 && (
+      {(FORM_LIST.length > 0 || files.length > 0) && (
         <div className="flex flex-wrap items-center gap-2">
           {FILTERS.map((f) => {
             const active = filter === f.key;
-            const count = filterCounts[f.key];
             return (
               <Link
                 key={f.key}
                 href={chipHref(f.key)}
                 aria-current={active ? "true" : undefined}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1",
+                  "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1",
                   active
                     ? "border-brand bg-brand text-white"
                     : "border-border-strong bg-card text-muted hover:border-brand/40 hover:text-brand",
                 )}
               >
-                {f.label}
-                <span className={cn("tabular-nums", active ? "text-white/75" : "text-slate-400")}>{count}</span>
+                {f.label} ({filterCounts[f.key]})
               </Link>
             );
           })}
         </div>
       )}
 
-      {files.length > 0 && (
-        <p role="status" aria-live="polite" className="text-xs text-muted">
-          แสดง <span className="font-semibold tabular-nums text-slate-700">{filteredFiles.length}</span> จาก {files.length} เอกสาร{q ? ` · ค้นหา “${q}”` : ""}
-        </p>
-      )}
-
-      {files.length === 0 ? (
+      {nothingToShow ? (
         <EmptyState
           icon={FileText}
-          title="ยังไม่มีเอกสารให้ดาวน์โหลด"
-          hint="ให้ IT วางไฟล์ PDF ไว้ที่ public/forms/"
-        />
-      ) : filteredFiles.length === 0 ? (
-        <EmptyState
-          icon={FileText}
-          title="ไม่พบเอกสารที่ตรงกับตัวกรอง"
+          title={q ? "ไม่พบเอกสารที่ตรงกับคำค้น" : "ไม่พบเอกสารที่ตรงกับตัวกรอง"}
           hint="ลองเปลี่ยนตัวกรอง หรือค้นด้วยรหัส F02, F03 แล้วลองอีกครั้ง"
           cta={{ href: "/documents", label: "ล้างตัวกรอง" }}
         />
       ) : (
         <div className="space-y-9">
-          {forms.length > 0 && <DocGroup heading="แบบฟอร์มขอรับบริการ IT" items={forms} />}
-          {others.length > 0 && <DocGroup heading="เอกสารอื่น" items={others} />}
+          {cardForms.length > 0 && (
+            <section>
+              <div className="mb-3 flex items-baseline justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">แบบฟอร์มสร้างคำร้องออนไลน์</h2>
+                  <p className="text-xs text-muted">เลือกบริการที่ต้องการ เพื่อสร้างคำร้องผ่านระบบ</p>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {cardForms.map((form, i) => {
+                  const Icon = SERVICE_ICON[form.type] ?? FileText;
+                  const tone = CARD_TONES[i % CARD_TONES.length];
+                  return (
+                    <div key={form.type} className="card flex flex-col gap-3 p-4">
+                      <span className={cn("flex h-11 w-11 items-center justify-center rounded-lg ring-1", tone.bg, tone.text, tone.ring)}>
+                        <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-900">{form.shortTitle}</p>
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{DESC[form.type] ?? form.title}</p>
+                        <span className="mt-2 inline-block rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500">
+                          {form.type}
+                        </span>
+                      </div>
+                      <ButtonLink href={`/tickets/new/${form.type}`} size="sm" className="w-full justify-center">
+                        สร้างคำร้อง
+                        <ArrowRight size={14} aria-hidden="true" />
+                      </ButtonLink>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {showTable && (
+            <section>
+              <div className="mb-3">
+                <h2 className="text-sm font-bold text-slate-900">เอกสารดาวน์โหลด</h2>
+                <p className="text-xs text-muted">เอกสารแบบฟอร์ม (PDF) สำหรับกรอกด้วยมือหรือเอกสารอ้างอิงอื่นๆ</p>
+              </div>
+              <div className="card overflow-x-auto">
+                <table className="w-full min-w-[640px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-[11px] text-muted">
+                      <th className="px-4 py-2.5 font-medium">ชื่อเอกสาร</th>
+                      <th className="px-4 py-2.5 font-medium">รหัส</th>
+                      <th className="px-4 py-2.5 font-medium">ขนาดไฟล์</th>
+                      <th className="px-4 py-2.5 font-medium">สถานะ</th>
+                      <th className="px-4 py-2.5 font-medium">อัปเดตล่าสุด</th>
+                      <th className="px-4 py-2.5 font-medium">จัดการ</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {others.map((f) => {
+                      const regenerated = REGENERATED.has(f.code);
+                      const { view: viewUrl, download: downloadUrl } = docUrls(f.code);
+                      const thumb = docThumb(f.code);
+                      const inProgress = PLACEHOLDER_NAME.has(f.code);
+                      return (
+                        <tr key={f.file} className="hover:bg-surface-subtle/60">
+                          <td className="px-4 py-3">
+                            <a href={viewUrl} target="_blank" rel="noreferrer" className="group/link flex items-center gap-3">
+                              {thumb ? (
+                                <span className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-slate-50 ring-1 ring-border">
+                                  <Image src={thumb} alt="" width={36} height={36} className="h-full w-full object-cover" />
+                                </span>
+                              ) : (
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-muted">
+                                  <FileText size={17} strokeWidth={1.8} aria-hidden="true" />
+                                </span>
+                              )}
+                              <span className="min-w-0">
+                                <span className="block font-semibold text-slate-900 group-hover/link:text-brand">{titleFor(f.code)}</span>
+                                <span className="block text-xs text-muted">
+                                  {inProgress
+                                    ? "ชื่อและรายละเอียดจริงยังไม่ยืนยัน — รอ IT ปรับปรุง"
+                                    : regenerated
+                                      ? "ไฟล์ต้นฉบับตัวอักษรซ้อนกัน — ใช้แบบฟอร์มเปล่าที่สร้างใหม่แทน"
+                                      : (DESC[f.code] ?? "")}
+                                </span>
+                              </span>
+                            </a>
+                          </td>
+                          <td className="px-4 py-3 font-mono text-xs text-slate-500">{f.code}</td>
+                          <td className="px-4 py-3 text-xs text-slate-500">{regenerated ? "สร้างใหม่" : f.bytes > 0 ? humanSize(f.bytes) : "—"}</td>
+                          <td className="px-4 py-3">
+                            {inProgress ? <Pill tone="amber">อยู่ระหว่างปรับปรุง</Pill> : <Pill tone="green">พร้อมใช้งาน</Pill>}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-slate-500">{fmtDate(f.updatedAt)}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1">
+                              <a
+                                href={viewUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                aria-label={`ดูตัวอย่าง ${titleFor(f.code)} (เปิดแท็บใหม่)`}
+                                title="ดูตัวอย่าง"
+                                className="flex h-8 items-center gap-1 rounded-md border border-border-strong px-2 text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
+                              >
+                                <Eye size={14} aria-hidden="true" />
+                              </a>
+                              <a
+                                href={downloadUrl}
+                                download
+                                aria-label={`ดาวน์โหลด ${titleFor(f.code)}`}
+                                title="ดาวน์โหลด"
+                                className="flex h-8 items-center gap-1 rounded-md border border-border-strong px-2 text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
+                              >
+                                <Download size={14} aria-hidden="true" />
+                              </a>
+                              <span
+                                aria-hidden="true"
+                                className="flex h-8 w-8 items-center justify-center rounded-md text-slate-300"
+                                title="เพิ่มเติม (เร็วๆ นี้)"
+                              >
+                                <MoreHorizontal size={16} />
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </div>
       )}
     </div>
-  );
-}
-
-function DocGroup({
-  heading,
-  items,
-}: {
-  heading: string;
-  items: { code: string; file: string; bytes: number }[];
-}) {
-  return (
-    <section>
-      <div className="mb-3 flex items-baseline gap-2">
-        <h2 className="text-[11px] font-semibold tracking-[0.2em] text-muted uppercase">{heading}</h2>
-        <span className="text-[11px] text-muted">· {items.length} รายการ</span>
-      </div>
-      {/* one bordered work surface for the whole group — docs/ui-foundation.md
-          "use a single bordered work surface for related content instead of
-          a card for every subsection". Classic grid-divider trick: the grid
-          itself is border-colored with a 1px gap, each cell paints over it
-          with the card background — draws hairline dividers between every
-          row and column with no fragile nth-child selectors. */}
-      <div className="card overflow-hidden">
-        <div className="grid gap-px bg-border sm:grid-cols-2 xl:grid-cols-3">
-        {items.map((f) => {
-          const regenerated = REGENERATED.has(f.code);
-          // served through an API route (not the raw /forms/<thai filename>.pdf
-          // path) so the browser gets a proper RFC 5987 filename header instead
-          // of guessing one from a percent-encoded Thai URL — that guess is what
-          // was showing up as a garbled tab title. Forms with a broken source
-          // PDF go to a regenerated blank copy instead (see doc-meta.ts).
-          const { view: viewUrl, download: downloadUrl } = docUrls(f.code);
-          const Icon = SERVICE_ICON[f.code] ?? FileText;
-          const thumb = docThumb(f.code);
-          return (
-            <div
-              key={f.file}
-              className="group relative flex items-start gap-3 bg-card p-4 transition hover:bg-brand-weak/20"
-            >
-              {/* compact, equal-weight action cluster — avoids one loud button next to an empty-looking one */}
-              <div className="absolute top-3 right-3 z-10 flex gap-1">
-                <a
-                  href={viewUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`ดูตัวอย่าง ${titleFor(f.code)} (เปิดแท็บใหม่)`}
-                  title="ดูตัวอย่าง"
-                  className="flex h-8 items-center justify-center gap-1 rounded-md border border-border-strong px-2 text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
-                >
-                  <Eye size={15} aria-hidden="true" />
-                  <span className="hidden text-xs xl:inline">ดู</span>
-                </a>
-                <a
-                  href={downloadUrl}
-                  download
-                  aria-label={`ดาวน์โหลด ${titleFor(f.code)}`}
-                  title="ดาวน์โหลด"
-                  className="flex h-8 items-center justify-center gap-1 rounded-md border border-border-strong px-2 text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
-                >
-                  <Download size={15} aria-hidden="true" />
-                  <span className="hidden text-xs xl:inline">ดาวน์โหลด</span>
-                </a>
-              </div>
-
-              {thumb ? (
-                <span className="h-11 w-11 shrink-0 overflow-hidden rounded-md bg-slate-50 ring-1 ring-border">
-                  <Image src={thumb} alt="" width={44} height={44} className="h-full w-full object-cover" />
-                </span>
-              ) : (
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-brand-weak text-brand">
-                  <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
-                </span>
-              )}
-
-              <a href={viewUrl} target="_blank" rel="noreferrer" aria-label={`เปิดเอกสาร ${titleFor(f.code)} (เปิดแท็บใหม่)`} className="group/link min-w-0 flex-1 rounded-sm pr-16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1 xl:pr-28">
-                <span className="block text-[0.95rem] leading-snug font-bold text-slate-900 group-hover/link:text-brand">
-                  {titleFor(f.code)}
-                </span>
-                {DESC[f.code] ? (
-                  <span className="mt-1 block text-xs leading-relaxed text-muted">{DESC[f.code]}</span>
-                ) : PLACEHOLDER_NAME.has(f.code) ? (
-                  <span className="mt-1 block text-xs leading-relaxed text-amber-600">
-                    ชื่อและรายละเอียดจริงยังไม่ยืนยัน — รอ IT ปรับปรุง
-                  </span>
-                ) : null}
-                {regenerated && (
-                  <span className="mt-1 block text-xs leading-relaxed text-slate-400">
-                    ไฟล์ต้นฉบับตัวอักษรซ้อนกัน — ใช้แบบฟอร์มเปล่าที่สร้างใหม่แทน
-                  </span>
-                )}
-                <span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="rounded bg-brand/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-brand">
-                    {f.code}
-                  </span>
-                  {regenerated ? (
-                    <span className="rounded bg-brand-weak px-1.5 py-0.5 text-[11px] font-medium text-brand">
-                      สร้างใหม่จากระบบ
-                    </span>
-                  ) : (
-                    f.bytes > 0 && (
-                      <span className="text-[11px] text-slate-400">PDF · {humanSize(f.bytes)}</span>
-                    )
-                  )}
-                  {PLACEHOLDER_NAME.has(f.code) ? (
-                    <Pill tone="amber">อยู่ระหว่างปรับปรุง</Pill>
-                  ) : (
-                    <Pill tone="green">พร้อมใช้งาน</Pill>
-                  )}
-                </span>
-              </a>
-            </div>
-          );
-        })}
-        </div>
-      </div>
-    </section>
   );
 }

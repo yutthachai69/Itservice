@@ -11,7 +11,10 @@ these rules before introducing a new pattern.
 - Cool gray surfaces organize information without adding a second visual theme.
 - Amber means waiting or attention, green means completed, red means error/destructive, and gray
   means inactive or cancelled. Semantic colors are not decoration.
-- A normal screen should not have multiple colored icon tiles competing for attention.
+- A normal screen should not have multiple colored icon tiles competing for attention. The
+  "แบบฟอร์มสร้างคำร้องออนไลน์" cards on `/documents` are a deliberate, explicitly-requested exception
+  (one color per card, cycling a fixed palette) — don't extend colored tiles to other screens from
+  this precedent without the same explicit ask.
 
 ## Typography
 

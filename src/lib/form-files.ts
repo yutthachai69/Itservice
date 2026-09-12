@@ -7,7 +7,7 @@ import { join } from "path";
 
 const DIR = join(process.cwd(), "public", "forms");
 
-export type FormFile = { code: string; file: string; bytes: number };
+export type FormFile = { code: string; file: string; bytes: number; updatedAt: Date | null };
 
 export function listFormFiles(): FormFile[] {
   let names: string[];
@@ -25,12 +25,15 @@ export function listFormFiles(): FormFile[] {
     const m = name.match(/(?:^|[^A-Za-z])(?:MN[_-])?(F\d{1,2}|ITR)(?![A-Za-z])/i);
     const code = m ? m[1].toUpperCase() : name.replace(/\.pdf$/i, "");
     let bytes = 0;
+    let updatedAt: Date | null = null;
     try {
-      bytes = statSync(join(DIR, name)).size;
+      const stat = statSync(join(DIR, name));
+      bytes = stat.size;
+      updatedAt = stat.mtime;
     } catch {
       /* ignore */
     }
-    out.push({ code, file: name, bytes });
+    out.push({ code, file: name, bytes, updatedAt });
   }
   // stable, natural-ish order by code
   return out.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));

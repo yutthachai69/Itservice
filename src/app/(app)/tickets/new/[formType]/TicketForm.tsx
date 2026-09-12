@@ -152,7 +152,7 @@ export function TicketForm({
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
         if (visible) setActiveSectionId(visible.target.id);
       },
-      { rootMargin: "-7rem 0px -62% 0px", threshold: 0.1 },
+      { rootMargin: "-112px 0px -62% 0px", threshold: 0.1 },
     );
     targets.forEach((target) => observer.observe(target));
     return () => observer.disconnect();

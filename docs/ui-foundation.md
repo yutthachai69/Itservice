@@ -58,8 +58,11 @@ these rules before introducing a new pattern.
 ## Operational forms
 
 - Form pages use the full content area; the form itself controls readable field widths through its grid.
-- Each section has a quiet 224px context column and a responsive one-to-three-column field area.
-- Long text, checkbox groups, and explanatory content span the complete field area.
+- Fields stack one per row, top to bottom — a 2-3 column field grid made the eye jump around instead
+  of reading straight down, which read as more confusing than the plain single-column legacy paper
+  forms it replaced. A short field (text/select/date) caps at a comfortable reading width
+  (`max-w-md`) instead of stretching edge-to-edge; long text, checkbox groups, and explanatory
+  content still span the complete field area.
 - Help and validation text stay next to their field and are connected with `aria-describedby`.
 - A single persistent footer holds cancellation and submission actions.
 - Context such as SLA, required-field count, and attachment limits appears once above the form.

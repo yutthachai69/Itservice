@@ -475,7 +475,7 @@ export function TicketForm({
                 onChange={(key, val) => set(key, val)}
               />
             ) : (
-              <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid gap-y-5">
                 {section.fields.map((f) => (
                   <Field
                     key={f.key}
@@ -510,11 +510,11 @@ export function TicketForm({
           title="ผู้ตรวจสอบ / อนุมัติ"
           description="เลือกรายชื่อตามลำดับการดำเนินงานของคำร้อง"
         >
-          <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid gap-y-5">
             {def.approvals.map((step) => {
               const opts = approvers.filter((a) => a.type === step.approverType);
               return (
-                <label key={step.fieldKey} className="block">
+                <label key={step.fieldKey} className="block max-w-md">
                   <span className="text-sm font-medium text-slate-700">
                     {step.label} <span className="text-red-500">*</span>
                   </span>
@@ -909,7 +909,7 @@ function WorkFunctionPairs({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid gap-y-5">
         <Field
           f={reqNameEn}
           sites={[]}
@@ -1049,7 +1049,11 @@ function Field({
   onChange: (v: string) => void;
   onToggle: (opt: string) => void;
 }) {
-  const span = f.colSpan === 2 ? "md:col-span-2 2xl:col-span-3" : "";
+  // single-column form (docs/ui-foundation.md: side-by-side fields made the
+  // eye jump around a dense form) — colSpan 1 now just caps a short field's
+  // width instead of sharing a row with another field, so a phone number or
+  // a select doesn't stretch edge-to-edge on a wide screen.
+  const span = f.colSpan === 2 ? "" : "max-w-md";
   const helpId = f.help ? `${f.key}-help` : undefined;
   const errorId = error ? `${f.key}-error` : undefined;
   const describedBy = [helpId, errorId].filter(Boolean).join(" ") || undefined;
@@ -1059,7 +1063,7 @@ function Field({
     const arr = Array.isArray(value) ? value : [];
     return (
       <div
-        className={cn("md:col-span-2 2xl:col-span-3", span)}
+        className={cn("w-full", span)}
         role="group"
         aria-labelledby={`${f.key}-label`}
         aria-describedby={describedBy}

@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Clock3, Download, ListChecks, Paperclip } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Clock3, Download, ListChecks, Paperclip } from "lucide-react";
 import { buttonClass } from "@/components/Button";
 import { PageHeader } from "@/components/PageHeader";
 import { getCurrentUser } from "@/lib/auth";
-import { isIT, SITES, siteName } from "@/lib/constants";
+import { isIT, SITES, siteName, STATUS_LABEL } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { formPdfFile } from "@/lib/form-files";
 import { docUrls, DESC } from "@/lib/doc-meta";
 import { getFormDef } from "@/lib/form-defs";
 import { siteCodeFromHeaders } from "@/lib/site-detect";
+import { fmtDateTime } from "@/lib/ui";
 import { TicketForm } from "./TicketForm";
 
 export default async function NewTicketPage({
@@ -51,6 +52,21 @@ export default async function NewTicketPage({
       0,
     ) + (def.approvals?.length ?? 0);
 
+  // 4.3: warn before a duplicate — same requester, same form type, still open —
+  // instead of only catching it after IT has to notice two tickets manually.
+  const duplicates = def.initiatedByIT
+    ? []
+    : await prisma.ticket.findMany({
+        where: {
+          requesterId: user.id,
+          formType: def.type,
+          status: { in: ["OPEN", "IN_PROGRESS", "RESOLVED"] },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        select: { id: true, docNo: true, status: true, userStatus: true, createdAt: true },
+      });
+
   return (
     <div className="w-full">
       <Link
@@ -79,6 +95,38 @@ export default async function NewTicketPage({
           ) : undefined
         }
       />
+
+      {duplicates.length > 0 && (
+        <div
+          role="status"
+          className="mb-5 flex flex-wrap items-start gap-3 border-l-4 border-amber-400 bg-amber-50/70 px-4 py-3.5"
+        >
+          <AlertTriangle size={17} className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-amber-900">
+              คุณมีคำร้อง {def.code} ประเภทเดียวกันที่ยังไม่ปิดอยู่แล้ว {duplicates.length} รายการ
+            </p>
+            <p className="mt-0.5 text-xs text-amber-700">
+              ตรวจสอบก่อนว่าเรื่องเดียวกันหรือไม่ เพื่อไม่ให้ IT ต้องรับงานซ้ำ — ถ้าเป็นปัญหาคนละเรื่อง ส่งคำร้องใหม่ได้ตามปกติ
+            </p>
+            <ul className="mt-2 space-y-1">
+              {duplicates.map((t) => (
+                <li key={t.id}>
+                  <Link
+                    href={`/tickets/${t.id}`}
+                    className="inline-flex flex-wrap items-center gap-1.5 text-xs font-medium text-amber-900 underline decoration-amber-400 underline-offset-2 hover:text-amber-950"
+                  >
+                    <span className="font-mono">{t.docNo}</span>
+                    <span className="font-normal text-amber-700">
+                      · {STATUS_LABEL[t.status] ?? t.status} · {t.userStatus} · {fmtDateTime(t.createdAt)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       <section
         aria-label="ข้อมูลก่อนกรอกคำร้อง"

@@ -376,9 +376,9 @@ export function TicketForm({
     <>
       <form onSubmit={submit} noValidate aria-busy={submitting || undefined} className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
       {submitting && <span role="status" className="sr-only">กำลังส่งคำร้อง กรุณารอสักครู่</span>}
-      {/* capped instead of stretching the full 1fr grid track — single-column
-          fields (max-w-md) inside a full-width card left a large dead strip
-          of blank white space next to the summary sidebar on wide screens */}
+      {/* capped instead of stretching the full 1fr grid track — a full-width
+          card on a wide desktop monitor left the single-column form looking
+          sparse next to the summary sidebar */}
       <div className="card min-w-0 max-w-3xl overflow-hidden">
       {formError && Object.keys(errors).length === 0 && (
         <p
@@ -517,7 +517,7 @@ export function TicketForm({
             {def.approvals.map((step) => {
               const opts = approvers.filter((a) => a.type === step.approverType);
               return (
-                <label key={step.fieldKey} className="block max-w-md">
+                <label key={step.fieldKey} className="block">
                   <span className="text-sm font-medium text-slate-700">
                     {step.label} <span className="text-red-500">*</span>
                   </span>
@@ -1053,10 +1053,11 @@ function Field({
   onToggle: (opt: string) => void;
 }) {
   // single-column form (docs/ui-foundation.md: side-by-side fields made the
-  // eye jump around a dense form) — colSpan 1 now just caps a short field's
-  // width instead of sharing a row with another field, so a phone number or
-  // a select doesn't stretch edge-to-edge on a wide screen.
-  const span = f.colSpan === 2 ? "" : "max-w-md";
+  // eye jump around a dense form) — fields fill the row's full width. The
+  // card itself is already capped at a comfortable reading width, so a
+  // per-field max-width on top of that just left each field looking
+  // stranded with dead space to its right instead of actually helping.
+  const span = "";
   const helpId = f.help ? `${f.key}-help` : undefined;
   const errorId = error ? `${f.key}-error` : undefined;
   const describedBy = [helpId, errorId].filter(Boolean).join(" ") || undefined;

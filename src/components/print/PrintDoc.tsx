@@ -297,6 +297,19 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
             </div>
           )}
 
+          {(blank ? p.userExtraFields ?? [] : extras.map((e) => e.label)).length > 0 && (
+            <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-[11px]">
+              {(blank
+                ? (p.userExtraFields ?? []).map((k) => ({ label: labelOf(k), value: "" }))
+                : extras
+              ).map((e, i) => (
+                <div key={`${e.label}-${i}`}>
+                  {e.label} <span className="fld inline-block min-w-[40mm]">{e.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="mt-2 flex gap-3">
             <table className="ptbl flex-1">
               <thead>

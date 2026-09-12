@@ -462,6 +462,12 @@ const WORK_FUNCTION_OPTIONS = [
   { value: "งาน-ควบคุมเงินสดย่อย(AP)", label: "งาน-ควบคุมเงินสดย่อย(AP)" },
 ];
 
+const USER_LEVEL_OPTIONS = [
+  { value: "ผู้ใช้ข้อมูล (View/Print)", label: "ผู้ใช้ข้อมูล (View/Print)" },
+  { value: "ผู้ปฏิบัติงาน (View/Print/Append/Edit/Delete)", label: "ผู้ปฏิบัติงาน (View/Print/Append/Edit/Delete)" },
+  { value: "ผู้อนุมัติ (View/Print/Approve/Reject/Void,Unapprove)", label: "ผู้อนุมัติ (View/Print/Approve/Reject/Void,Unapprove)" },
+];
+
 function workFunctionField(n: 1 | 2 | 3 | 4 | 5): FieldDef {
   return {
     key: `workFunction${n}`,
@@ -470,6 +476,21 @@ function workFunctionField(n: 1 | 2 | 3 | 4 | 5): FieldDef {
     required: n === 1,
     colSpan: 1,
     options: WORK_FUNCTION_OPTIONS,
+    help:
+      n === 1
+        ? "แต่ละฟังก์ชั่นงานมีหน้าจอ/เมนูย่อยของตัวเอง (เช่น งาน-ทั่วไป ครอบคลุมบันทึกใบขอซื้อ (PR), บันทึกเบิกสินค้า (IC), บันทึกแผนการลงทุนตามโครงการ (BG) ฯลฯ) — IT จะตรวจสอบและระบุรายการหน้าจอที่เกี่ยวข้องให้ตอนพิจารณาคำร้อง"
+        : undefined,
+  };
+}
+
+function userLevelField(n: 1 | 2 | 3 | 4 | 5): FieldDef {
+  return {
+    key: `userLevel${n}`,
+    label: "User Level",
+    type: "select",
+    required: n === 1,
+    colSpan: 1,
+    options: USER_LEVEL_OPTIONS,
   };
 }
 
@@ -487,18 +508,15 @@ const F13: FormDef = {
       fields: [
         { key: "reqNameEn", label: "ชื่อภาษาอังกฤษ (Name-Lastname)", type: "text", colSpan: 2, maxLength: 100 },
         workFunctionField(1),
+        userLevelField(1),
         workFunctionField(2),
+        userLevelField(2),
         workFunctionField(3),
+        userLevelField(3),
         workFunctionField(4),
+        userLevelField(4),
         workFunctionField(5),
-        {
-          key: "userLevel",
-          label: "ระดับสิทธิ์ที่ต้องการ (User Level) ต่อฟังก์ชั่นงาน",
-          type: "textarea",
-          required: true,
-          colSpan: 2,
-          help: "ระบุ User Level ที่ต้องการของแต่ละฟังก์ชั่นงานที่เลือกด้านบน เช่น “งาน-จัดซื้อ: User”",
-        },
+        userLevelField(5),
       ],
     },
     {

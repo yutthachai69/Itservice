@@ -45,8 +45,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         ข้ามไปเนื้อหาหลัก
       </a>
       <NavProgress />
-      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[248px] overflow-y-auto border-r border-white/10 bg-sidebar text-white lg:flex lg:flex-col">
-        <Link href="/" className="flex h-16 items-center gap-3 border-b border-white/10 px-5 text-lg font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-weak">
+      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[248px] overflow-y-auto border-r border-border bg-card lg:flex lg:flex-col">
+        <Link href="/" className="flex h-16 items-center gap-3 border-b border-border px-5 text-lg font-bold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/35">
           <Image
             src="/TSM.png"
             alt=""
@@ -58,16 +58,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </Link>
 
         <div className="px-3 py-5">
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/45">เมนูหลัก</p>
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">เมนูหลัก</p>
           <AppNav links={links} variant="sidebar" />
         </div>
 
-        <div className="border-t border-white/10 px-3 py-5">
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/45">บริการ</p>
+        <div className="border-t border-border px-3 py-5">
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">บริการ</p>
           <ServiceNav />
         </div>
 
-        <p className="mt-auto px-5 pb-5 pt-3 text-[11px] text-white/45">{siteName(user.siteCode ?? "")} · IT Service Desk</p>
+        <p className="mt-auto px-5 pb-5 pt-3 text-[11px] text-slate-400">{siteName(user.siteCode ?? "")} · IT Service Desk</p>
       </aside>
 
       <div className="min-w-0 lg:ml-[248px]">

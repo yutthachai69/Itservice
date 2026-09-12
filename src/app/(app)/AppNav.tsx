@@ -39,8 +39,8 @@ export function AppNav({
               : "flex h-11 shrink-0 items-center border-b-2 px-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-inset",
             variant === "sidebar"
               ? active(l.href)
-                ? "border-brand bg-white/10 font-semibold text-white"
-                : "border-transparent text-white/75 hover:bg-white/5 hover:text-white"
+                ? "border-brand bg-brand-weak font-semibold text-brand"
+                : "border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               : active(l.href)
                 ? "border-brand font-medium text-brand"
                 : "border-transparent text-muted hover:border-slate-300 hover:text-slate-900",

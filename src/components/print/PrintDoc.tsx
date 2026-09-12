@@ -82,6 +82,7 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
         .fld { border-bottom: 1px dotted #000; }
         .cell { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
         .tall { height: 26mm; }
+        .softrow { min-height: 9mm; }
         .sig { border-bottom: 1px dotted #000; height: 12mm; }
         table.ptbl { border-collapse: collapse; width: 100%; }
       `}</style>
@@ -135,36 +136,36 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
             </thead>
             <tbody>
               <tr>
-                <td className="cell tall align-top">
+                <td className="cell softrow align-top">
                   <div>{blank ? "" : t.reqName}</div>
                   {(blank || display("reqNameEn")) && (
                     <div className="text-slate-500">{blank ? "" : display("reqNameEn")}</div>
                   )}
                 </td>
-                <td className="cell tall align-top">{blank ? "" : t.reqDept ?? ""}</td>
-                <td className="cell tall align-top">{blank ? "" : t.reqPosition ?? ""}</td>
-                <td className="cell tall align-top">{blank ? "" : display("serviceSiteCode")}</td>
-                <td className="cell tall align-top">
+                <td className="cell softrow align-top">{blank ? "" : t.reqDept ?? ""}</td>
+                <td className="cell softrow align-top">{blank ? "" : t.reqPosition ?? ""}</td>
+                <td className="cell softrow align-top">{blank ? "" : display("serviceSiteCode")}</td>
+                <td className="cell softrow align-top">
                   {!blank &&
                     checkOptions
                       .filter((o) => checked.has(o.value))
                       .map((o) => <div key={o.value}>{o.label}</div>)}
                 </td>
-                <td className="cell tall align-top">
+                <td className="cell softrow align-top">
                   {!blank &&
                     [1, 2, 3, 4, 5]
                       .map((n) => display(`workFunction${n}`))
                       .filter(Boolean)
                       .map((v, i) => <div key={i}>{v}</div>)}
                 </td>
-                <td className="cell tall align-top">
+                <td className="cell softrow align-top">
                   {!blank &&
                     [1, 2, 3, 4, 5]
                       .map((n) => display(`userLevel${n}`))
                       .filter(Boolean)
                       .map((v, i) => <div key={i}>{v}</div>)}
                 </td>
-                <td className="cell tall whitespace-pre-wrap align-top">{blank ? "" : t.note ?? ""}</td>
+                <td className="cell softrow whitespace-pre-wrap align-top">{blank ? "" : t.note ?? ""}</td>
               </tr>
             </tbody>
           </table>
@@ -179,7 +180,7 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
             </div>
           </div>
 
-          <div className="mt-6 flex justify-between gap-6 text-[11px]">
+          <div className="mt-5 flex justify-between gap-6 text-[11px]">
             <div className="flex-1 text-center">
               <div className="sig" />
               <div>( {blank ? "" : t.reqName} )</div>

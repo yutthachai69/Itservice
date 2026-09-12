@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { FieldDef, FormDef, SectionDef } from "@/lib/form-defs";
+import { SOFTPRO_GUIDELINE } from "@/lib/softpro-guideline";
 import { Check, MapPin, Paperclip, UploadCloud, X } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -948,6 +949,9 @@ function WorkFunctionPairs({
                   onToggle={() => {}}
                 />
               </div>
+              {typeof values[wf.key] === "string" && values[wf.key] && (
+                <SoftproGuidelineHint workFunction={values[wf.key] as string} />
+              )}
               {n === 1 && wf.help && <p className="mt-3 text-xs leading-relaxed text-slate-400">{wf.help}</p>}
             </div>
           );
@@ -964,6 +968,54 @@ function WorkFunctionPairs({
           + เพิ่มฟังก์ชั่นงานอีกรายการ ({visibleCount}/{slots.length})
         </button>
       )}
+    </div>
+  );
+}
+
+/**
+ * F13-only: shows which Softpro screens a selected ฟังก์ชั่นงาน grants, from
+ * the static SOFTPRO_GUIDELINE lookup (built from IT's own workbook). That
+ * source only cleanly tags ~180 of its ~680 screens to a specific work
+ * function — the rest sit in generic "รายงาน"/"งานพิเศษ" buckets — so this is
+ * a helpful starting point, not the full picture; said so explicitly rather
+ * than implying completeness, and always points back at the full download.
+ */
+function SoftproGuidelineHint({ workFunction }: { workFunction: string }) {
+  const screens = SOFTPRO_GUIDELINE[workFunction];
+  return (
+    <div className="mt-3 rounded-md border border-border bg-card p-3">
+      <p className="text-xs font-semibold text-slate-600">
+        หน้าจอ Softpro ที่เกี่ยวข้อง{screens?.length ? ` (${screens.length} รายการ)` : ""}
+      </p>
+      {screens && screens.length > 0 ? (
+        <div className="mt-2 max-h-48 overflow-y-auto rounded border border-border">
+          <table className="w-full text-left text-xs">
+            <thead className="sticky top-0 bg-surface-subtle text-[11px] text-muted">
+              <tr>
+                <th className="px-2 py-1.5 font-medium">โค้ด</th>
+                <th className="px-2 py-1.5 font-medium">ชื่อหน้าจอ</th>
+                <th className="px-2 py-1.5 font-medium">โมดูล</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {screens.map((s, i) => (
+                <tr key={`${s.code}-${s.module}-${i}`}>
+                  <td className="px-2 py-1 font-mono text-[11px] text-slate-700">{s.code}</td>
+                  <td className="px-2 py-1 text-slate-700">{s.name || "—"}</td>
+                  <td className="px-2 py-1 text-slate-500">{s.module || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="mt-1 text-xs leading-relaxed text-slate-400">
+          ยังไม่มีรายชื่อหน้าจออ้างอิงสำหรับฟังก์ชั่นงานนี้ในไฟล์ที่ IT ให้มา — ดูไฟล์เต็มจากปุ่ม “รายชื่อโค้ดหน้าจอ Softpro” ด้านบน หรือระบุในหมายเหตุให้ IT ช่วยตรวจสอบ
+        </p>
+      )}
+      <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
+        รายการนี้เป็นข้อมูลเบื้องต้นจากไฟล์ของ IT อาจไม่ครบทุกหน้าจอ — IT จะตรวจสอบและยืนยันรายการจริงให้ตอนพิจารณาคำร้อง
+      </p>
     </div>
   );
 }

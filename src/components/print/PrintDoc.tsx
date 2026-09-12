@@ -93,32 +93,44 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
         table.ptbl { border-collapse: collapse; width: 100%; }
       `}</style>
 
-      {/* ── header ── */}
-      <div className="flex items-start gap-3 pb-2">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/TSM.png" alt="" className="h-12 w-12 object-contain" />
-        <div className="flex-1 text-center">
-          <div className="whitespace-pre-line text-[16px] font-bold">{p.title}</div>
-        </div>
-        <div className="w-[46mm] text-[11px]">
-          <div>
-            วันที่แจ้ง <span className="fld inline-block min-w-[24mm]">{blank ? "" : fmtDate(t.createdAt)}</span>
+      {p.layout !== "softpro" && (
+        <>
+          {/* ── header (F06/F11/F12/F03/F02/F07/F10) ── */}
+          <div className="flex items-start gap-3 pb-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/TSM.png" alt="" className="h-12 w-12 object-contain" />
+            <div className="flex-1 text-center">
+              <div className="text-[16px] font-bold">{p.title}</div>
+            </div>
+            <div className="w-[46mm] text-[11px]">
+              <div>
+                วันที่แจ้ง <span className="fld inline-block min-w-[24mm]">{blank ? "" : fmtDate(t.createdAt)}</span>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      <div className="flex justify-between text-[11px]">
-        <div>
-          บริษัทที่ขอรับบริการ{" "}
-          <span className="fld inline-block min-w-[40mm]">{blank ? "" : siteName(t.serviceSiteCode)}</span>
-        </div>
-        <div>
-          เลขเอกสาร <span className="fld inline-block min-w-[34mm] font-mono">{t.docNo}</span>
-        </div>
-      </div>
+          <div className="flex justify-between text-[11px]">
+            <div>
+              บริษัทที่ขอรับบริการ{" "}
+              <span className="fld inline-block min-w-[40mm]">{blank ? "" : siteName(t.serviceSiteCode)}</span>
+            </div>
+            <div>
+              เลขเอกสาร <span className="fld inline-block min-w-[34mm] font-mono">{t.docNo}</span>
+            </div>
+          </div>
+        </>
+      )}
 
       {p.layout === "softpro" ? (
         <>
-          {/* ── softpro layout (F13) — mirrors the real paper form's single wide row ── */}
+          {/* ── softpro layout (F13) — mirrors the real paper form exactly: no
+              logo/วันที่แจ้ง/บริษัทที่ขอรับบริการ line like the other forms —
+              just doc number, centered title, "Page 1 of 1" ── */}
+          <div className="flex items-start justify-between text-[11px]">
+            <div>เลขที่เอกสาร {t.docNo}</div>
+            <div className="flex-1 whitespace-pre-line text-center text-[14px] font-bold">{p.title}</div>
+            <div>Page 1 of 1</div>
+          </div>
+
           <table className="ptbl mt-2 w-full text-[10px]" style={{ tableLayout: "fixed" }}>
             <thead>
               <tr>
@@ -147,6 +159,14 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
                   {(blank || display("reqNameEn")) && (
                     <div className="text-slate-500">{blank ? "" : display("reqNameEn")}</div>
                   )}
+                  <div className="mt-2">
+                    ลำดับY:{" "}
+                    <span className="fld inline-block min-w-[14mm]">{blank ? "" : display("prApprovalOrder")}</span>
+                  </div>
+                  <div>
+                    วงเงินอนุมัติ(PR):{" "}
+                    <span className="fld inline-block min-w-[14mm]">{blank ? "" : display("prApprovalLimit")}</span>
+                  </div>
                 </td>
                 <td className="cell softrow align-top">{blank ? "" : t.reqDept ?? ""}</td>
                 <td className="cell softrow align-top">{blank ? "" : t.reqPosition ?? ""}</td>
@@ -176,21 +196,14 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
             </tbody>
           </table>
 
-          <div className="mt-2 flex w-full gap-8 text-[11px]">
-            <div>
-              ลำดับ Y <span className="fld inline-block min-w-[20mm]">{blank ? "" : display("prApprovalOrder")}</span>
-            </div>
-            <div>
-              วงเงินอนุมัติ(PR){" "}
-              <span className="fld inline-block min-w-[30mm]">{blank ? "" : display("prApprovalLimit")}</span>
-            </div>
-          </div>
-
           <div className="mt-5 flex w-full justify-between gap-6 text-[11px]">
             <div className="flex-1 text-center">
               <div className="sig" />
               <div>( {blank ? "" : t.reqName} )</div>
               <div className="text-slate-600">{p.userSignature}</div>
+              <div className="mt-1">
+                วันที่ <span className="fld inline-block min-w-[20mm]" />
+              </div>
             </div>
             {(!blank && t.approvals.length > 0
               ? t.approvals.map((a) => ({
@@ -206,6 +219,9 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
                 <div className="sig" />
                 <div>( {s.name} )</div>
                 <div className="text-slate-600">{s.role}</div>
+                <div className="mt-1">
+                  วันที่ <span className="fld inline-block min-w-[20mm]" />
+                </div>
               </div>
             ))}
           </div>
@@ -220,6 +236,9 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
                   <div className="sig" />
                   <div>( ................................ )</div>
                   <div className="text-slate-600">{role}</div>
+                  <div className="mt-1">
+                    วันที่ <span className="fld inline-block min-w-[20mm]" />
+                  </div>
                 </div>
               ))}
             </div>

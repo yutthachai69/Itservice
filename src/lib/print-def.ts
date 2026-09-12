@@ -148,11 +148,11 @@ export const PRINT_DEFS: Record<string, PrintDef> = {
       "หมายเหตุ ผู้ขอสิทธิ์ใช้งาน = หน.แผนก/หน.ส่วน หรือผู้ที่มีตำแหน่งสูงกว่าผู้ได้รับสิทธิ์ในการขอ, ผู้ตรวจสอบ = ผู้จัดการฝ่าย, ผู้อนุมัติให้สิทธิ์ = COO/CFO, กรรมการผู้จัดการ, ประธานกรรมการ/CEO",
   },
   F13: {
-    // an explicit line break here (rendered via whitespace-pre-line) instead
-    // of leaving it to wrap naturally — the header's title column is narrow
-    // (squeezed by the logo and the date box on either side) and letting the
-    // browser choose the break point split it mid-phrase at some widths.
-    title: "แบบคำขอสิทธิ์ / ปรับปรุง / ระงับ / ยกเลิก สิทธิ์การทำงานระบบ ERP\n( Softpro )",
+    // the real form prints this on one line — F13's own header (see
+    // PrintDoc's "softpro" branch) gives the title a wide flex-1 center
+    // column instead of the generic header's logo/date-squeezed one, so it
+    // fits without needing a forced break.
+    title: "แบบคำขอสิทธิ์ / ปรับปรุง / ระงับ / ยกเลิก สิทธิ์การทำงานระบบ ERP ( Softpro )",
     docCode: "IT01-IT-F13",
     layout: "softpro",
     checkboxField: "division",

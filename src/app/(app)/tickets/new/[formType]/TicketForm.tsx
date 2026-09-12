@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { FieldDef, FormDef } from "@/lib/form-defs";
+import type { FieldDef, FormDef, SectionDef } from "@/lib/form-defs";
 import { Check, MapPin, Paperclip, UploadCloud, X } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -448,6 +448,7 @@ export function TicketForm({
         const isRequester = section.title.includes("ผู้ขอ");
         const hasServiceSite = section.fields.some((f) => f.key === "serviceSiteCode");
         const hasLoanFields = section.fields.some((f) => f.key === "deviceType");
+        const workFunctionPairs = def.type === "F13" ? section.fields.some((f) => f.key === "workFunction1") : false;
         return (
           <Section
             key={section.title}
@@ -464,22 +465,32 @@ export function TicketForm({
                 </span>
               </p>
             )}
-            <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 2xl:grid-cols-3">
-              {section.fields.map((f) => (
-                <Field
-                  key={f.key}
-                  f={f}
-                  sites={sites}
-                  depts={deptOptions}
-                  departmentsLoading={Boolean(serviceSite) && departmentsLoadedFor !== serviceSite}
-                  value={values[f.key]}
-                  error={errors[f.key]}
-                  disabled={submitting}
-                  onChange={(val) => set(f.key, val)}
-                  onToggle={(opt) => toggle(f.key, opt)}
-                />
-              ))}
-            </div>
+            {workFunctionPairs ? (
+              <WorkFunctionPairs
+                section={section}
+                values={values}
+                errors={errors}
+                disabled={submitting}
+                onChange={(key, val) => set(key, val)}
+              />
+            ) : (
+              <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 2xl:grid-cols-3">
+                {section.fields.map((f) => (
+                  <Field
+                    key={f.key}
+                    f={f}
+                    sites={sites}
+                    depts={deptOptions}
+                    departmentsLoading={Boolean(serviceSite) && departmentsLoadedFor !== serviceSite}
+                    value={values[f.key]}
+                    error={errors[f.key]}
+                    disabled={submitting}
+                    onChange={(val) => set(f.key, val)}
+                    onToggle={(opt) => toggle(f.key, opt)}
+                  />
+                ))}
+              </div>
+            )}
             {showLoanCheck && hasLoanFields && (
               <LoanAvailabilityHint
                 category={(values.deviceType as string) ?? ""}
@@ -857,6 +868,104 @@ function compactSectionTitle(title: string) {
   if (title.includes("แก้ไขข้อมูลระบบ")) return "รายละเอียดการแก้ไข";
   if (title.includes("รายการ")) return "รายละเอียดรายการ";
   return title;
+}
+
+/**
+ * F13-only: ฟังก์ชั่นงานที่ N + its User Level select rendered as one boxed
+ * row instead of two independent fields in the shared 2/3-column grid — that
+ * grid's column count changes by breakpoint, which drifted the "which level
+ * goes with which function" pairing out of alignment (reported by the user
+ * as confusing). Only slot 1 is required, so slots 2-5 stay hidden behind
+ * "+ เพิ่มฟังก์ชั่นงาน" until needed (or already filled, in edit mode).
+ */
+function WorkFunctionPairs({
+  section,
+  values,
+  errors,
+  disabled,
+  onChange,
+}: {
+  section: SectionDef;
+  values: Values;
+  errors: Record<string, string>;
+  disabled?: boolean;
+  onChange: (key: string, val: string) => void;
+}) {
+  const fieldByKey = (key: string) => section.fields.find((f) => f.key === key)!;
+  const reqNameEn = fieldByKey("reqNameEn");
+  const slots = [1, 2, 3, 4, 5] as const;
+
+  const [visibleCount, setVisibleCount] = useState(() =>
+    Math.max(
+      1,
+      slots.reduce((n, i) => (String(values[`workFunction${i}`] ?? "").trim() ? i : n), 1),
+    ),
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 2xl:grid-cols-3">
+        <Field
+          f={reqNameEn}
+          sites={[]}
+          depts={[]}
+          value={values[reqNameEn.key]}
+          error={errors[reqNameEn.key]}
+          disabled={disabled}
+          onChange={(v) => onChange(reqNameEn.key, v)}
+          onToggle={() => {}}
+        />
+      </div>
+
+      <div className="space-y-3">
+        {slots.slice(0, visibleCount).map((n) => {
+          const wf = fieldByKey(`workFunction${n}`);
+          const ul = fieldByKey(`userLevel${n}`);
+          return (
+            <div key={n} className="rounded-md border border-border-strong bg-surface-subtle/40 p-4">
+              <p className="mb-3 text-xs font-semibold text-slate-600">
+                ฟังก์ชั่นงานที่ {n} {n === 1 && <span className="text-red-500">*</span>}
+              </p>
+              <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+                <Field
+                  f={{ ...wf, label: "เลือกฟังก์ชั่นงาน" }}
+                  sites={[]}
+                  depts={[]}
+                  value={values[wf.key]}
+                  error={errors[wf.key]}
+                  disabled={disabled}
+                  onChange={(v) => onChange(wf.key, v)}
+                  onToggle={() => {}}
+                />
+                <Field
+                  f={{ ...ul, label: "User Level", help: undefined }}
+                  sites={[]}
+                  depts={[]}
+                  value={values[ul.key]}
+                  error={errors[ul.key]}
+                  disabled={disabled}
+                  onChange={(v) => onChange(ul.key, v)}
+                  onToggle={() => {}}
+                />
+              </div>
+              {n === 1 && wf.help && <p className="mt-3 text-xs leading-relaxed text-slate-400">{wf.help}</p>}
+            </div>
+          );
+        })}
+      </div>
+
+      {visibleCount < slots.length && (
+        <button
+          type="button"
+          onClick={() => setVisibleCount((c) => Math.min(slots.length, c + 1))}
+          disabled={disabled}
+          className="text-sm font-medium text-brand hover:underline disabled:pointer-events-none disabled:opacity-55"
+        >
+          + เพิ่มฟังก์ชั่นงานอีกรายการ ({visibleCount}/{slots.length})
+        </button>
+      )}
+    </div>
+  );
 }
 
 function Field({

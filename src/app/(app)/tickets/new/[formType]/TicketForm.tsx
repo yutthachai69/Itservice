@@ -928,7 +928,7 @@ function WorkFunctionPairs({
               </p>
               <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
                 <Field
-                  f={{ ...wf, label: "เลือกฟังก์ชั่นงาน" }}
+                  f={{ ...wf, label: "เลือกฟังก์ชั่นงาน", help: undefined }}
                   sites={[]}
                   depts={[]}
                   value={values[wf.key]}

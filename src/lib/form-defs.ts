@@ -486,7 +486,11 @@ function workFunctionField(n: 1 | 2 | 3 | 4 | 5): FieldDef {
 function userLevelField(n: 1 | 2 | 3 | 4 | 5): FieldDef {
   return {
     key: `userLevel${n}`,
-    label: "User Level",
+    // the responsive grid can end up 2 or 3 columns wide, so a plain "User
+    // Level" placed right after its matching work-function field drifts out
+    // of alignment and reads as unrelated — spelling out which slot it
+    // belongs to keeps it unambiguous at any column count.
+    label: `User Level (ฟังก์ชั่นงานที่ ${n})`,
     type: "select",
     required: n === 1,
     colSpan: 1,
@@ -508,14 +512,14 @@ const F13: FormDef = {
       fields: [
         { key: "reqNameEn", label: "ชื่อภาษาอังกฤษ (Name-Lastname)", type: "text", colSpan: 2, maxLength: 100 },
         workFunctionField(1),
-        userLevelField(1),
         workFunctionField(2),
-        userLevelField(2),
         workFunctionField(3),
-        userLevelField(3),
         workFunctionField(4),
-        userLevelField(4),
         workFunctionField(5),
+        userLevelField(1),
+        userLevelField(2),
+        userLevelField(3),
+        userLevelField(4),
         userLevelField(5),
       ],
     },

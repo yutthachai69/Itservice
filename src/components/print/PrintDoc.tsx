@@ -196,15 +196,8 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
             </tbody>
           </table>
 
-          <div className="mt-5 flex w-full justify-between gap-6 text-[11px]">
-            <div className="flex-1 text-center">
-              <div className="sig" />
-              <div>( {blank ? "" : t.reqName} )</div>
-              <div className="text-slate-600">{p.userSignature}</div>
-              <div className="mt-1">
-                วันที่ <span className="fld inline-block min-w-[20mm]" />
-              </div>
-            </div>
+          <div className="mt-6 flex w-full justify-between gap-6 text-[11px]">
+            <SoftproSignature role={p.userSignature} name={blank ? "" : t.reqName} />
             {(!blank && t.approvals.length > 0
               ? t.approvals.map((a) => ({
                   name: a.approver?.name ?? "",
@@ -215,36 +208,23 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
                   { name: "", role: "ผู้อนุมัติ" },
                 ]
             ).map((s, i) => (
-              <div key={i} className="flex-1 text-center">
-                <div className="sig" />
-                <div>( {s.name} )</div>
-                <div className="text-slate-600">{s.role}</div>
-                <div className="mt-1">
-                  วันที่ <span className="fld inline-block min-w-[20mm]" />
-                </div>
-              </div>
+              <SoftproSignature key={i} role={s.role} name={s.name} />
             ))}
           </div>
 
           {p.approvalNote && <p className="mt-2 w-full whitespace-pre-line text-[9px] leading-snug">{p.approvalNote}</p>}
 
-          <div className="bx mt-3 w-full p-2">
-            <div className="text-[12px] font-bold">ฝ่ายเทคโนโลยีสารสนเทศ รับงาน</div>
-            <div className="mt-4 flex gap-10 text-[11px]">
-              {(p.itBoxSignatures ?? []).map((role, i) => (
-                <div key={i} className="flex-1 text-center">
-                  <div className="sig" />
-                  <div>( ................................ )</div>
-                  <div className="text-slate-600">{role}</div>
-                  <div className="mt-1">
-                    วันที่ <span className="fld inline-block min-w-[20mm]" />
-                  </div>
-                </div>
-              ))}
+          <div className="bx mt-3 w-full p-2 text-[11px]">
+            <div className="flex justify-between gap-8">
+              <span className="font-bold">ฝ่ายเทคโนโลยีสารสนเทศ รับงาน</span>
+              <span className="flex-1">
+                บันทึกข้อความ / ความเห็น <span className="fld inline-block min-w-[50mm]" />
+              </span>
             </div>
-            <div className="mt-3 text-[11px]">
-              บันทึกข้อความ/ความเห็น
-              <div className="fld mt-1 h-[10mm]" />
+            <div className="mt-4 flex justify-between gap-10">
+              {(p.itBoxSignatures ?? []).map((role, i) => (
+                <SoftproSignature key={i} role={role} name="" />
+              ))}
             </div>
           </div>
         </>
@@ -528,6 +508,22 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
         <span>{blank ? "แบบฟอร์มเปล่าสำหรับพิมพ์กรอกด้วยมือ" : `พิมพ์เมื่อ ${fmtDateTime(new Date())} · เอกสาร ${t.docNo}`}</span>
         <span>{p.docCode}</span>
       </div>
+    </div>
+  );
+}
+
+/**
+ * F13 (softpro layout) signature block — matches the real paper form's
+ * pattern of writing the role label directly on the signature line itself
+ * ("ผู้ขอ.....................") rather than as a caption underneath, with
+ * the name in parens below it and a blank day/month/year date under that.
+ */
+function SoftproSignature({ role, name }: { role: string; name: string }) {
+  return (
+    <div className="flex-1">
+      <div className="fld">{role}</div>
+      <div className="mt-1 text-center">( {name} )</div>
+      <div className="mt-1 text-center text-slate-500">......../......../........</div>
     </div>
   );
 }

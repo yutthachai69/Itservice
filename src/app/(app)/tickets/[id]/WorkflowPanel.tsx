@@ -247,10 +247,15 @@ export function WorkflowPanel({
           <section aria-labelledby="case-actions-heading" className="space-y-2 border-t border-border pt-4">
             <h3 id="case-actions-heading" className="text-xs font-semibold text-muted">ตัวเลือกคำร้อง</h3>
             {isIT && !closed && <Button className="w-full" variant="secondary" loading={busyAction === "CLOSE"} disabled={busy} onClick={() => setConfirmAction("CLOSE")}>ปิดงานทันที</Button>}
-            {!closed && (
+            {!closed && (isIT || itStatus === "NEW") && (
               <Button className="w-full" variant="danger" loading={busyAction === "CANCEL"} disabled={busy} onClick={() => setConfirmAction("CANCEL")}>
                 <AlertTriangle size={15} aria-hidden="true" /> ยกเลิกคำร้อง
               </Button>
+            )}
+            {!closed && !isIT && itStatus !== "NEW" && (
+              <p className="text-[11px] leading-5 text-muted">
+                IT รับเรื่องแล้ว หากต้องการยกเลิกกรุณาติดต่อ IT โดยตรง (บันทึกความคิดเห็นด้านบนเพื่อแจ้งได้)
+              </p>
             )}
             {closed && (
               <Button className="w-full" variant="secondary" loading={busyAction === "REOPEN"} disabled={busy} onClick={() => run("REOPEN")}>

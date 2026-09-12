@@ -393,6 +393,9 @@ export async function applyTransition(input: TransitionInput) {
     case "CANCEL": {
       if (!actorIsIT && !actorIsRequester) return deny();
       if (t.status === "CLOSED") return bad("ปิดงานแล้ว ยกเลิกไม่ได้");
+      // once IT has picked the ticket up, only IT can cancel it — the
+      // requester should contact IT instead of pulling it out from under them
+      if (!actorIsIT && t.itStatus !== "NEW") return bad("IT รับเรื่องแล้ว กรุณาติดต่อ IT เพื่อขอยกเลิก");
       data.status = toStatus = "CANCELLED";
       data.userStatus = "ยกเลิก";
       break;

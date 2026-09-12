@@ -66,6 +66,12 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
       : [],
   );
 
+  // F13 print table: the real paper form writes just "งาน-ทั่วไป" / "ผู้ปฏิบัติงาน"
+  // in each Transection/UserLevel row and explains the "(แนะนำ)"/"(View/Print/…)"
+  // parenthetical once in the footnote legend — using the full option label in
+  // every row (as elsewhere in the app) wrapped badly and didn't match the source.
+  const shortLabel = (key: string) => display(key).split(" (")[0];
+
   const reason = p.reasonField ? display(p.reasonField) : "";
   const extras = (p.userExtraFields ?? [])
     .map((k) => ({ label: labelOf(k), value: display(k) }))
@@ -92,7 +98,7 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/TSM.png" alt="" className="h-12 w-12 object-contain" />
         <div className="flex-1 text-center">
-          <div className="text-[16px] font-bold">{p.title}</div>
+          <div className="whitespace-pre-line text-[16px] font-bold">{p.title}</div>
         </div>
         <div className="w-[46mm] text-[11px]">
           <div>
@@ -154,14 +160,14 @@ export function PrintDoc({ t, blank = false }: { t: PrintTicketLike; blank?: boo
                 <td className="cell softrow align-top">
                   {!blank &&
                     [1, 2, 3, 4, 5]
-                      .map((n) => display(`workFunction${n}`))
+                      .map((n) => shortLabel(`workFunction${n}`))
                       .filter(Boolean)
                       .map((v, i) => <div key={i}>{v}</div>)}
                 </td>
                 <td className="cell softrow align-top">
                   {!blank &&
                     [1, 2, 3, 4, 5]
-                      .map((n) => display(`userLevel${n}`))
+                      .map((n) => shortLabel(`userLevel${n}`))
                       .filter(Boolean)
                       .map((v, i) => <div key={i}>{v}</div>)}
                 </td>

@@ -538,7 +538,12 @@ const F13: FormDef = {
           ],
         },
         { key: "prApprovalLimit", label: "วงเงินอนุมัติ (PR)", type: "text", maxLength: 14, colSpan: 1, placeholder: "พิมพ์จำนวนเงิน" },
-        serviceSiteField,
+        // same field key/options as serviceSiteField (SITES gets injected by
+        // key alone) but labeled to match the real paper form's "สังกัด
+        // (ชื่อย่อ)" column instead of the generic app-wide wording — a
+        // dedicated object so it doesn't rename the label on every other form
+        // that shares the serviceSiteField singleton.
+        { key: "serviceSiteCode", label: "สังกัด (ชื่อย่อ)", type: "select", required: true, colSpan: 1, options: [] },
         {
           key: "division",
           label: "บริษัทที่ปฏิบัติงาน (Division)",

@@ -45,29 +45,43 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         ข้ามไปเนื้อหาหลัก
       </a>
       <NavProgress />
-      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[248px] overflow-y-auto border-r border-border bg-card lg:flex lg:flex-col">
-        <Link href="/" className="flex h-16 items-center gap-3 border-b border-border px-5 text-lg font-bold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/35">
-          <Image
-            src="/TSM.png"
-            alt=""
-            width={40}
-            height={40}
-            className="h-10 w-10 object-contain [filter:drop-shadow(0_2px_4px_rgb(16_24_40_/_0.15))]"
-          />
-          <span>IT Service</span>
+      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[248px] overflow-y-auto border-r border-white/10 bg-sidebar text-white lg:flex lg:flex-col">
+        <Link href="/" className="flex flex-col gap-1 border-b border-white/10 px-5 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40">
+          <span className="flex items-center gap-3">
+            <Image
+              src="/TSM.png"
+              alt=""
+              width={40}
+              height={40}
+              className="h-10 w-10 shrink-0 object-contain [filter:drop-shadow(0_2px_4px_rgb(0_0_0_/_0.35))]"
+            />
+            <span className="text-lg font-bold text-white">IT Service</span>
+          </span>
+          <span className="pl-[3.25rem] text-xs text-white/45">Technology for People</span>
         </Link>
 
         <div className="px-3 py-5">
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">เมนูหลัก</p>
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/40">เมนูหลัก</p>
           <AppNav links={links} variant="sidebar" />
         </div>
 
-        <div className="border-t border-border px-3 py-5">
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">บริการ</p>
+        <div className="border-t border-white/10 px-3 py-5">
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/40">บริการ</p>
           <ServiceNav />
         </div>
 
-        <p className="mt-auto px-5 pb-5 pt-3 text-[11px] text-slate-400">{siteName(user.siteCode ?? "")} · IT Service Desk</p>
+        <div className="mt-auto flex items-center gap-3 border-t border-white/10 px-5 py-4">
+          <span
+            aria-hidden="true"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white"
+          >
+            {initials(user.displayName)}
+          </span>
+          <div className="min-w-0 leading-tight">
+            <p className="truncate text-sm font-semibold text-white">{user.displayName}</p>
+            <p className="truncate text-xs text-white/45">{siteName(user.siteCode ?? "")} · IT Service Desk</p>
+          </div>
+        </div>
       </aside>
 
       <div className="min-w-0 lg:ml-[248px]">
@@ -92,7 +106,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               >
                 {initials(user.displayName)}
               </span>
-              <div className="hidden items-center gap-2.5 sm:flex">
+              <div className="hidden items-center gap-2.5 sm:flex lg:hidden">
                 <span
                   aria-hidden="true"
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-weak text-sm font-semibold text-brand"

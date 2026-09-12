@@ -17,7 +17,7 @@
   --warning: #a15c07;
   --danger: #c43232;
   /* App chrome uses one deep navy; service categories do not introduce new brand colors. */
-  --sidebar: #0f2a4f;
+  --sidebar: #1c2f52; /* refined — lighter/less saturated than the original #0f2a4f so a full-rail fill stays legible and doesn't feel heavy */
   --sidebar-line: #ffffff1a;
 }
 

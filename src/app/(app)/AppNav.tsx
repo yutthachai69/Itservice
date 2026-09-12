@@ -35,12 +35,12 @@ export function AppNav({
           aria-current={active(l.href) ? "page" : undefined}
           className={cn(
             variant === "sidebar"
-              ? "flex items-center rounded-md border-l-2 py-2.5 pr-3 pl-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-inset"
+              ? "flex items-center rounded-md py-2.5 px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-inset"
               : "flex h-11 shrink-0 items-center border-b-2 px-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-inset",
             variant === "sidebar"
               ? active(l.href)
-                ? "border-brand bg-brand-weak font-semibold text-brand"
-                : "border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                ? "bg-brand font-semibold text-white shadow-sm"
+                : "text-white/70 hover:bg-white/5 hover:text-white"
               : active(l.href)
                 ? "border-brand font-medium text-brand"
                 : "border-transparent text-muted hover:border-slate-300 hover:text-slate-900",

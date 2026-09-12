@@ -38,9 +38,15 @@ these rules before introducing a new pattern.
 
 ## Application shell
 
-- Desktop navigation is a fixed 248px deep-navy rail attached to the left edge and full viewport height.
+- Desktop navigation is a fixed 248px deep-navy rail (`--sidebar`, a refined lighter navy — not the
+  near-black tone a full-rail fill needs to stay legible and calm) attached to the left edge and
+  full viewport height.
 - Primary and service navigation use a quiet white-on-navy hierarchy; category icons stay monochrome.
-- The active item uses a brand-blue left rule, translucent white background, and white text.
+- The active item is a solid brand-blue pill with white text, not a left rule or translucent tint —
+  the rail is already colored, so the active state needs real contrast against it, not another shade
+  of the same navy.
+- The rail footer carries the signed-in identity (avatar, name, site) instead of repeating it in the
+  top header; the header only repeats it below the desktop breakpoint, where the rail is hidden.
 - The top header stays white and quiet so it does not compete with the current task.
 - Main content is fluid. Width limits belong to focused tasks, not to the application shell.
 - Mobile primary navigation scrolls horizontally; service entry remains on the home screen.

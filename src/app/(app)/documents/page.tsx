@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { FORM_LIST } from "@/lib/form-defs";
-import { listFormFiles } from "@/lib/form-files";
+import { listFormFiles, formPdfFile } from "@/lib/form-files";
 import { docThumb } from "@/lib/doc-thumbs";
 import { titleFor, DESC, SERVICE_ICON, REGENERATED, docUrls } from "@/lib/doc-meta";
 import { EmptyState } from "@/components/EmptyState";
@@ -10,7 +10,6 @@ import { Pill } from "@/components/Badge";
 import { Button, ButtonLink } from "@/components/Button";
 import { fmtDate, cn } from "@/lib/ui";
 import {
-  ArrowRight,
   CircleCheck,
   Download,
   Eye,
@@ -189,22 +188,48 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
                 {cardForms.map((form, i) => {
                   const Icon = SERVICE_ICON[form.type] ?? FileText;
                   const tone = CARD_TONES[i % CARD_TONES.length];
+                  const pdf = formPdfFile(form.type);
+                  const urls = pdf ? docUrls(form.type) : null;
                   return (
-                    <div key={form.type} className="card flex flex-col gap-3 p-4">
-                      <span className={cn("flex h-11 w-11 items-center justify-center rounded-lg ring-1", tone.bg, tone.text, tone.ring)}>
-                        <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-slate-900">{form.shortTitle}</p>
-                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{DESC[form.type] ?? form.title}</p>
-                        <span className="mt-2 inline-block rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500">
-                          {form.type}
+                    <div key={form.type} className="card relative flex flex-col gap-3 p-4">
+                      {/* the paper-form PDF's own view/download — the card
+                          itself (icon + title, below) is still the way to
+                          reach /tickets/new/[code] */}
+                      {urls && (
+                        <div className="absolute top-3 right-3 z-10 flex gap-1">
+                          <a
+                            href={urls.view}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`ดูตัวอย่าง ${form.shortTitle} (เปิดแท็บใหม่)`}
+                            title="ดูตัวอย่าง"
+                            className="flex h-8 w-8 items-center justify-center rounded-md border border-border-strong text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
+                          >
+                            <Eye size={14} aria-hidden="true" />
+                          </a>
+                          <a
+                            href={urls.download}
+                            download
+                            aria-label={`ดาวน์โหลด ${form.shortTitle}`}
+                            title="ดาวน์โหลด"
+                            className="flex h-8 w-8 items-center justify-center rounded-md border border-border-strong text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
+                          >
+                            <Download size={14} aria-hidden="true" />
+                          </a>
+                        </div>
+                      )}
+                      <Link href={`/tickets/new/${form.type}`} className="group/link flex min-w-0 flex-1 flex-col gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
+                        <span className={cn("flex h-11 w-11 items-center justify-center rounded-lg ring-1", tone.bg, tone.text, tone.ring)}>
+                          <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
                         </span>
-                      </div>
-                      <ButtonLink href={`/tickets/new/${form.type}`} size="sm" className="w-full justify-center">
-                        สร้างคำร้อง
-                        <ArrowRight size={14} aria-hidden="true" />
-                      </ButtonLink>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-bold text-slate-900 group-hover/link:text-brand">{form.shortTitle}</span>
+                          <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-muted">{DESC[form.type] ?? form.title}</span>
+                          <span className="mt-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500">
+                            {form.type}
+                          </span>
+                        </span>
+                      </Link>
                     </div>
                   );
                 })}

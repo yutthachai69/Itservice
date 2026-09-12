@@ -2,7 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { AlertTriangle, ArrowLeft, Clock3, Download, ListChecks, Paperclip } from "lucide-react";
-import { buttonClass } from "@/components/Button";
+import { buttonClass } from "@/lib/button-class";
 import { PageHeader } from "@/components/PageHeader";
 import { getCurrentUser } from "@/lib/auth";
 import { isIT, SITES, siteName, STATUS_LABEL } from "@/lib/constants";

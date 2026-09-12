@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Inbox, type LucideIcon } from "lucide-react";
-import { buttonClass } from "@/components/Button";
+import { buttonClass } from "@/lib/button-class";
 
 export function EmptyState({
   icon: Icon = Inbox,

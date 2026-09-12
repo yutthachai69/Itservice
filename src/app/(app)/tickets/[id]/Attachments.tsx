@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Paperclip, Trash2 } from "lucide-react";
-import { buttonClass } from "@/components/Button";
+import { buttonClass } from "@/lib/button-class";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DetailSection } from "@/components/DetailSection";
 import { useToast } from "@/components/Toast";

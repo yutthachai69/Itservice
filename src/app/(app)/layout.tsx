@@ -8,7 +8,7 @@ import { ServiceNav } from "./ServiceNav";
 import { NavProgress } from "./NavProgress";
 import { RememberSite } from "./RememberSite";
 import { ToastProvider } from "@/components/Toast";
-import { buttonClass } from "@/components/Button";
+import { buttonClass } from "@/lib/button-class";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

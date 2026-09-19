@@ -132,7 +132,7 @@ export async function overdueLoans(siteCode?: string) {
       status: { in: ["BOOKED", "ONLOAN"] },
       returnedAt: null,
       dueDate: { lt: new Date() },
-      ...(siteCode ? { ticket: { siteCode } } : {}),
+      ...(siteCode ? { item: { siteCode } } : {}),
     },
     include: { item: true, ticket: { select: { id: true, docNo: true } } },
     orderBy: { dueDate: "asc" },

@@ -10,7 +10,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const ticketId = Number(id);
   const body = await req.json().catch(() => ({}));
   const score = Number(body.score);
-  if (!Number.isInteger(ticketId) || !(score >= 1 && score <= 5)) {
+  const scoreQuality = Number(body.scoreQuality);
+  const scoreSpeed = Number(body.scoreSpeed);
+  const inRange = (n: number) => Number.isInteger(n) && n >= 1 && n <= 5;
+  if (!Number.isInteger(ticketId) || !inRange(score) || !inRange(scoreQuality) || !inRange(scoreSpeed)) {
     return NextResponse.json({ error: "BAD_INPUT" }, { status: 400 });
   }
 
@@ -28,6 +31,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         ticketId,
         raterId: user.id,
         score,
+        scoreQuality,
+        scoreSpeed,
         comment: typeof body.comment === "string" ? body.comment.trim() || null : null,
       },
     });
@@ -35,8 +40,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       where: { id: ticketId },
       data: { userStatus: "ประเมินแล้ว" },
     });
+    const avg = Math.round(((score + scoreQuality + scoreSpeed) / 3) * 10) / 10;
     await tx.ticketEvent.create({
-      data: { ticketId, actorId: user.id, action: "COMMENT", comment: `ประเมิน ${score}/5` },
+      data: { ticketId, actorId: user.id, action: "COMMENT", comment: `ประเมินเฉลี่ย ${avg}/5 (พึงพอใจ ${score} · เรียบร้อย ${scoreQuality} · รวดเร็ว ${scoreSpeed})` },
     });
   });
 

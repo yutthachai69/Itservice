@@ -5,10 +5,10 @@ export default function Loading() {
     <div role="status" className="space-y-6" aria-busy="true" aria-live="polite">
       <p className="sr-only">กำลังโหลดข้อมูล</p>
       <div className="flex items-start justify-between gap-6 border-b border-border pb-4 sm:items-end">
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Skeleton className="h-3 w-28" />
-          <Skeleton className="h-7 w-64" />
-          <Skeleton className="h-3.5 w-80" />
+          <Skeleton className="h-7 w-64 max-w-full" />
+          <Skeleton className="h-3.5 w-80 max-w-full" />
         </div>
         <Skeleton className="hidden h-10 w-36 sm:block" />
       </div>
@@ -33,7 +33,7 @@ export default function Loading() {
               {Array.from({ length: rows }, (_, i) => (
                 <div key={i} className={panel === 0 && i === 0 ? "bg-sidebar p-5" : "border-t border-border p-4 first:border-t-0"}>
                   <Skeleton className={panel === 0 && i === 0 ? "h-4 w-44 bg-white/20" : "h-3.5 w-40"} />
-                  <Skeleton className={panel === 0 && i === 0 ? "mt-2 h-3 w-72 bg-white/15" : "mt-2 h-3 w-2/3"} />
+                  <Skeleton className={panel === 0 && i === 0 ? "mt-2 h-3 w-72 max-w-full bg-white/15" : "mt-2 h-3 w-2/3"} />
                 </div>
               ))}
             </div>

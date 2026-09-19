@@ -59,11 +59,11 @@ export default async function DashboardPage({
         ? new Date(now.getFullYear(), now.getMonth(), 1)
         : new Date(now.getTime() - (range === "7d" ? 7 : 30) * 86_400_000);
 
-  const siteWhere = site ? { siteCode: site } : {};
+  const siteWhere = site ? { serviceSiteCode: site } : {};
   const createdWhere = from ? { createdAt: { gte: from } } : {};
   const evalWhere = {
     ...(from ? { createdAt: { gte: from } } : {}),
-    ...(site ? { ticket: { siteCode: site } } : {}),
+    ...(site ? { ticket: { serviceSiteCode: site } } : {}),
   };
 
   const [
@@ -110,13 +110,25 @@ export default async function DashboardPage({
       where: { status: { in: ["IN_PROGRESS", "RESOLVED"] }, assignedToId: { not: null }, ...siteWhere },
       _count: { _all: true },
     }),
-    prisma.evaluation.aggregate({ _avg: { score: true }, _count: { _all: true }, where: evalWhere }),
+    prisma.evaluation.aggregate({
+      _avg: { score: true, scoreQuality: true, scoreSpeed: true },
+      _count: { _all: true },
+      where: evalWhere,
+    }),
     prisma.evaluation.groupBy({ by: ["score"], _count: { _all: true }, where: evalWhere }),
     prisma.evaluation.findMany({
       where: evalWhere,
       orderBy: { createdAt: "desc" },
       take: 5,
-      include: { ticket: { select: { id: true, docNo: true, formType: true } } },
+      select: {
+        id: true,
+        score: true,
+        scoreQuality: true,
+        scoreSpeed: true,
+        comment: true,
+        createdAt: true,
+        ticket: { select: { id: true, docNo: true, formType: true } },
+      },
     }),
   ]);
 
@@ -141,12 +153,27 @@ export default async function DashboardPage({
   const rangeWord = RANGE_WORD[range];
   const scoped = `${site ? siteName(site) : "ทุกบริษัท"} · ${rangeWord}`;
   const workloadMax = Math.max(1, ...byAssignee.map((r) => r._count._all));
-  const avgScore = evalAgg._avg.score;
+  // three evaluation dimensions (legacy parity): satisfaction / quality /
+  // speed. Old single-score rows have null quality/speed — Prisma _avg skips
+  // nulls, so each axis averages over the rows that have it. The headline is
+  // the mean of whichever axis averages exist.
+  const dimAvgs = [
+    { label: "พึงพอใจ", value: evalAgg._avg.score },
+    { label: "เรียบร้อย", value: evalAgg._avg.scoreQuality },
+    { label: "รวดเร็ว", value: evalAgg._avg.scoreSpeed },
+  ];
+  const presentAvgs = dimAvgs.map((d) => d.value).filter((v): v is number => v != null);
+  const avgScore = presentAvgs.length ? presentAvgs.reduce((a, b) => a + b, 0) / presentAvgs.length : null;
+  const rowAvg = (e: { score: number; scoreQuality: number | null; scoreSpeed: number | null }) => {
+    const vals = [e.score, e.scoreQuality, e.scoreSpeed].filter((v): v is number => v != null);
+    return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+  };
   const ticketSiteQuery = site ? `&site=${site}` : "";
   const activeQueueHref = `/tickets?status=active${ticketSiteQuery}`;
   const inProgressHref = `/tickets?status=in_progress${ticketSiteQuery}`;
   const resolvedHref = `/tickets?status=resolved${ticketSiteQuery}`;
-  const closedHref = `/tickets?status=closed_only${ticketSiteQuery}`;
+  const closedHref = `/tickets?status=closed_only${ticketSiteQuery}${from ? `&closedFrom=${encodeURIComponent(from.toISOString())}` : ""}`;
+  const formHref = (formType: string) => `/tickets?status=all&formType=${formType}${ticketSiteQuery}${from ? `&createdFrom=${encodeURIComponent(from.toISOString())}` : ""}`;
   const urgentCount = overdue.length + loansLate.length;
   const firstOverdue = overdue[0];
   const priorityHref = firstOverdue
@@ -156,7 +183,7 @@ export default async function DashboardPage({
       : activeQueueHref;
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-6">
       <PageHeader
         title="แดชบอร์ด"
         subtitle={`ภาพรวมงาน IT · ${scoped}`}
@@ -226,7 +253,7 @@ export default async function DashboardPage({
         </div>
       </section>
 
-      <section aria-label="สรุปตัวชี้วัด" className="grid overflow-hidden rounded-md border border-border bg-card sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <section aria-label="สรุปตัวชี้วัด" className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border lg:grid-cols-3 xl:grid-cols-6">
         <Kpi
           icon={Inbox}
           label="เปิดค้างทั้งหมด"
@@ -276,6 +303,16 @@ export default async function DashboardPage({
         </section>
       )}
 
+      <section className="overflow-hidden rounded-md border border-border bg-card lg:border-0 lg:bg-transparent">
+        <input id="dashboard-report-toggle" type="checkbox" className="peer sr-only" />
+        <label htmlFor="dashboard-report-toggle" className="flex cursor-pointer items-center justify-between gap-4 p-4 focus-within:ring-2 focus-within:ring-brand/35 sm:p-5 lg:hidden">
+          <div>
+            <p className="font-semibold text-slate-900">รายงานและรายละเอียดเพิ่มเติม</p>
+            <p className="mt-0.5 text-xs text-muted">แยกตามแบบฟอร์ม · งานเกิน SLA · ภาระงาน · ผลประเมิน</p>
+          </div>
+          <span aria-hidden="true" className="shrink-0 text-sm text-muted">⌄</span>
+        </label>
+        <div className="dashboard-report-content space-y-6 border-t border-border bg-surface-subtle/30 p-4 sm:p-5 lg:border-0 lg:bg-transparent lg:p-0">
       <section className="card p-5">
         <SectionTitle>แยกตามประเภทแบบฟอร์ม</SectionTitle>
         <p className="mt-0.5 text-xs text-muted">นับจากงานที่สร้างในช่วง {rangeWord}</p>
@@ -286,7 +323,7 @@ export default async function DashboardPage({
             return (
               <li key={f.type} className="rounded-md border border-border bg-card p-3">
                 <div className="flex items-center justify-between gap-3">
-                  <Link href={`/tickets?formType=${f.type}${site ? `&site=${site}` : ""}`} className="min-w-0 rounded-sm text-sm font-medium text-slate-800 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
+                  <Link href={formHref(f.type)} className="min-w-0 rounded-sm text-sm font-medium text-slate-800 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
                     <span className="mr-2 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">{f.code}</span>
                     {f.shortTitle}
                   </Link>
@@ -331,7 +368,7 @@ export default async function DashboardPage({
                   <tr key={f.type} className="transition-colors hover:bg-brand-weak/20">
                     <td className="px-2 py-2.5">
                       <Link
-                        href={`/tickets?formType=${f.type}${site ? `&site=${site}` : ""}`}
+                        href={formHref(f.type)}
                         className="inline-flex items-center gap-2 rounded-sm text-slate-700 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
                       >
                         <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs">{f.code}</span>
@@ -372,7 +409,7 @@ export default async function DashboardPage({
               {overdue.slice(0, 10).map(({ t, sla }) => (
                 <li
                   key={t.id}
-                  className="flex items-center gap-2 rounded-md border-l-2 border-red-400 bg-red-50/40 py-2 pr-2 pl-3"
+                  className="flex min-w-0 flex-wrap items-center gap-2 rounded-md border-l-2 border-red-400 bg-red-50/40 py-2 pr-2 pl-3"
                 >
                   <Link href={`/tickets/${t.id}`} aria-label={`เปิดคำร้อง ${t.docNo}`} className="rounded-sm font-mono text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
                     {t.docNo}
@@ -381,7 +418,7 @@ export default async function DashboardPage({
                     {t.formType}
                   </span>
                    <span className="min-w-0 flex-1 line-clamp-2 break-words text-muted" title={t.reqName}>{t.reqName}</span>
-                   <Pill tone="red">{sla.text}</Pill>
+                   <span className="w-full text-xs font-medium leading-5 text-red-700">{sla.text}</span>
                 </li>
               ))}
             </ul>
@@ -443,6 +480,13 @@ export default async function DashboardPage({
             เฉลี่ยจาก {evalAgg._count._all} รายการ · {rangeWord}
           </span>
         </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {dimAvgs.map((d) => (
+            <span key={d.label} className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs text-amber-800 ring-1 ring-inset ring-amber-200">
+              {d.label} <span className="font-semibold tabular-nums">{d.value != null ? d.value.toFixed(2) : "—"}</span>
+            </span>
+          ))}
+        </div>
         <div className="mt-3 space-y-1.5">
           {[5, 4, 3, 2, 1].map((s) => {
             const n = evalDist.find((d) => d.score === s)?._count._all ?? 0;
@@ -477,12 +521,15 @@ export default async function DashboardPage({
                 </Link>{" "}
                 <span
                   role="img"
-                  aria-label={`${e.score} จาก 5 คะแนน`}
-                  className="inline-flex items-center gap-0.5 text-amber-500"
+                  aria-label={`เฉลี่ย ${rowAvg(e)} จาก 5 คะแนน`}
+                  className="inline-flex items-center gap-1 text-amber-500"
                 >
-                  {Array.from({ length: e.score }, (_, index) => (
-                    <Star key={index} size={13} fill="currentColor" aria-hidden="true" />
-                  ))}
+                  <span className="inline-flex items-center gap-0.5">
+                    {Array.from({ length: Math.round(rowAvg(e)) }, (_, index) => (
+                      <Star key={index} size={13} fill="currentColor" aria-hidden="true" />
+                    ))}
+                  </span>
+                  <span className="text-xs font-semibold tabular-nums">{rowAvg(e).toFixed(1)}</span>
                 </span>
                  {e.comment && <span className="min-w-full break-words text-slate-600">{e.comment}</span>}
                  <span className="text-xs text-slate-400">{fmtDateTime(e.createdAt)}</span>
@@ -490,6 +537,8 @@ export default async function DashboardPage({
             ))}
           </ul>
         )}
+      </section>
+        </div>
       </section>
     </div>
   );
@@ -511,7 +560,7 @@ function Kpi({
   const inner = (
     <div
       className={cn(
-        "h-full border-t border-border p-4 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0",
+        "h-full bg-card p-4",
         href && "group transition hover:bg-brand-weak/25",
       )}
     >

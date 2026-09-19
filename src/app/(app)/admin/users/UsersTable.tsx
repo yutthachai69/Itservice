@@ -79,19 +79,32 @@ export function UsersTable({
           const self = u.id === currentAdminId;
           const busy = busyId === u.id;
           return (
-            <li key={u.id} aria-busy={busy || undefined} className={(u.active ? "" : "bg-slate-50/70 ") + (busy ? "opacity-70 " : "") + "space-y-3 p-4"}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-medium text-slate-900">
-                    {u.displayName}
-                    {self && <span className="ml-2 text-xs font-medium text-brand">(บัญชีของคุณ)</span>}
-                  </p>
-                  <p className="mt-0.5 break-words text-xs text-slate-400">{u.username}{u.email ? ` · ${u.email}` : ""}</p>
-                  <p className="mt-1 text-xs text-muted">{u.site} · {u.department}</p>
-                </div>
-                {busy && <span role="status" className="shrink-0 text-[11px] font-medium text-brand">กำลังบันทึก...</span>}
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+            <li key={u.id} aria-busy={busy || undefined} className={(u.active ? "" : "bg-slate-50/70 ") + (busy ? "opacity-70 " : "") + "p-4"}>
+              <details className="group">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 [&::-webkit-details-marker]:hidden">
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-900">
+                      {u.displayName}
+                      {self && <span className="ml-2 text-xs font-medium text-brand">(บัญชีของคุณ)</span>}
+                    </p>
+                    <p className="mt-0.5 break-words text-xs text-slate-400">{u.username}{u.email ? ` · ${u.email}` : ""}</p>
+                    <p className="mt-1 text-xs text-muted">{u.site} · {u.department}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                        {ROLE_LABEL[u.role as keyof typeof ROLE_LABEL] ?? u.role}
+                      </span>
+                      {u.roleLocked && <span className="rounded bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">ล็อกบทบาท</span>}
+                      <span className={u.active ? "rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700" : "rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500"}>
+                        {u.active ? "ใช้งานอยู่" : "ปิดใช้งาน"}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="inline-flex shrink-0 items-center gap-1 pt-0.5 text-xs font-medium text-brand">
+                    {busy ? "กำลังบันทึก..." : "จัดการ"}
+                    <span aria-hidden="true" className="transition-transform group-open:rotate-180">⌄</span>
+                  </span>
+                </summary>
+                <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
                 <label className="flex flex-col gap-1 text-xs text-muted">
                   บทบาท
                   <select
@@ -115,7 +128,8 @@ export function UsersTable({
                     {u.active ? "ใช้งานอยู่" : "ปิดใช้งาน"}
                   </label>
                 </div>
-              </div>
+                </div>
+              </details>
             </li>
           );
         })}

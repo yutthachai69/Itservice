@@ -241,6 +241,20 @@ textarea::placeholder {
   .toast-out { transition: none; }
 }
 
+.dashboard-report-content {
+  display: none;
+}
+
+#dashboard-report-toggle:checked ~ .dashboard-report-content {
+  display: block;
+}
+
+@media (min-width: 64rem) {
+  .dashboard-report-content {
+    display: block;
+  }
+}
+
 @media print {
   .no-print {
     display: none !important;

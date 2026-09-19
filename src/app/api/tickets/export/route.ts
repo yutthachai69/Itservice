@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import ExcelJS from "exceljs";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { ticketDateFilter } from "@/lib/ticket-date-filter";
 import { isIT, siteName, STATUS_LABEL, IT_STATUS_LABEL } from "@/lib/constants";
 
 export async function GET(req: NextRequest) {
@@ -12,6 +13,10 @@ export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const it = isIT(user.role);
   const where: Prisma.TicketWhereInput = {};
+  const createdFrom = ticketDateFilter(sp.get("createdFrom"));
+  const closedFrom = ticketDateFilter(sp.get("closedFrom"));
+  if (createdFrom) where.createdAt = { gte: new Date(createdFrom) };
+  if (closedFrom) where.closedAt = { gte: new Date(closedFrom) };
   if (!it || sp.get("mine") === "1") where.requesterId = user.id;
   if (it && sp.get("assignee") === "me") where.assignedToId = user.id;
   if (sp.get("formType")) where.formType = sp.get("formType")!;

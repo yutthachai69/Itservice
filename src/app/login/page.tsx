@@ -58,6 +58,7 @@ export default async function LoginPage({
         <div className="flex items-center gap-3">
           <Image
             src="/TSM.png"
+            loading="eager"
             alt="TSM Group"
             width={48}
             height={48}

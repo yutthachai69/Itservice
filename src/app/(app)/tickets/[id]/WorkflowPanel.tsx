@@ -318,7 +318,7 @@ function WorkflowSteps({ status, currentStage }: { status: string; currentStage:
       </div>
 
       <div className="mt-3 overflow-x-auto pb-1">
-        <ol aria-label="ลำดับสถานะคำร้อง" className="grid min-w-[30rem] grid-cols-5 gap-1 sm:min-w-0">
+        <ol aria-label="ลำดับสถานะคำร้อง" className="grid grid-cols-5 gap-1">
           {WORKFLOW_STAGES.map((stage, index) => {
             const done = !cancelled && index < currentStage;
             const current = !cancelled && index === currentStage;
@@ -354,7 +354,7 @@ function WorkflowSteps({ status, currentStage }: { status: string; currentStage:
                 </div>
                 <span
                   className={cn(
-                    "mt-1 block whitespace-nowrap text-[10px] leading-4",
+                    "mt-1 block break-words text-xs leading-5",
                     current ? "inline-flex items-center rounded border border-brand/25 bg-brand-weak px-1.5 py-0.5 font-semibold text-brand" : done ? "font-medium text-slate-600" : "text-slate-400",
                     cancelled && "text-slate-300",
                   )}

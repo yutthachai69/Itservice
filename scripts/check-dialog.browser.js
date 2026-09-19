@@ -1,0 +1,23 @@
+(async () => {
+  const pause = () => new Promise(resolve => setTimeout(resolve, 250));
+  const field = document.querySelector('form textarea');
+  if (!field) throw new Error('No textarea on form');
+  Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(field, 'ทดสอบยกเลิกโดยไม่บันทึก');
+  field.dispatchEvent(new Event('input', { bubbles: true }));
+  await pause();
+  const trigger = [...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'ยกเลิก' && button.getBoundingClientRect().width);
+  if (!trigger) throw new Error('No visible cancel trigger');
+  trigger.focus();
+  trigger.click();
+  await pause();
+  const dialog = document.querySelector('dialog[open]');
+  if (!dialog) throw new Error('Dirty form did not open dialog');
+  const initialFocus = document.activeElement.textContent.trim();
+  const stay = [...dialog.querySelectorAll('button')].find(button => /อยู่ต่อ|กลับไป/.test(button.textContent));
+  if (!stay) throw new Error('No stay action');
+  stay.click();
+  await pause();
+  const result = { initialFocus, closed: !dialog.open, focusRestored: document.activeElement === trigger, dataPreserved: field.value === 'ทดสอบยกเลิกโดยไม่บันทึก' };
+  if (!result.closed || !result.focusRestored || !result.dataPreserved) throw new Error(JSON.stringify(result));
+  return result;
+})();

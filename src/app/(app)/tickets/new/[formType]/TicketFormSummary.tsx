@@ -52,7 +52,7 @@ export function TicketFormSummary({
         return (
           <section key={section.title} className="border-t border-border px-4 py-4 first:border-t-0">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="min-w-0 truncate text-xs font-semibold text-slate-900" title={summaryTitle(section.title)}>
+              <h3 className="min-w-0 break-words text-sm font-semibold text-slate-900">
                 {summaryTitle(section.title)}
               </h3>
               <div className="flex shrink-0 items-center gap-2">
@@ -60,7 +60,7 @@ export function TicketFormSummary({
                   <span
                     title="จำนวนช่องจำเป็นที่กรอกแล้ว"
                     aria-label={`กรอกช่องจำเป็นแล้ว ${requiredComplete} จาก ${required.length} ช่อง`}
-                    className={cn("text-[11px] font-medium tabular-nums", requiredComplete === required.length ? "text-emerald-700" : "text-slate-400")}
+                    className={cn("text-xs font-medium tabular-nums", requiredComplete === required.length ? "text-emerald-700" : "text-slate-500")}
                   >
                     {requiredComplete}/{required.length}
                   </span>
@@ -69,7 +69,7 @@ export function TicketFormSummary({
                   href={`#ticket-section-${sectionIndex + 1}`}
                   onClick={() => focusHashTarget(`ticket-section-${sectionIndex + 1}`)}
                   aria-label={`แก้ไข ${summaryTitle(section.title)}`}
-                  className="rounded-sm text-[11px] font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
+                  className="rounded-sm text-xs font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
                 >
                 แก้ไข
                 </a>
@@ -78,19 +78,19 @@ export function TicketFormSummary({
             {completed.length > 0 ? (
               <dl className="mt-2.5 space-y-2">
                 {completed.slice(0, 5).map((field) => (
-                  <div key={field.key} className="grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1.2fr)] gap-2 text-[11px] leading-4">
-                    <dt className="truncate text-slate-400" title={field.label}>{field.label}</dt>
+                  <div key={field.key} className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-3 text-xs leading-5">
+                    <dt className="break-words text-slate-500">{field.label}</dt>
                     <dd className="min-w-0 break-words font-medium text-slate-700">
                       {displayValue(field, values[field.key], sites, departments)}
                     </dd>
                   </div>
                 ))}
                 {completed.length > 5 && (
-                  <p className="text-[11px] text-slate-400">และอีก {completed.length - 5} รายการ</p>
+                  <p className="text-xs text-slate-500">และอีก {completed.length - 5} รายการ</p>
                 )}
               </dl>
             ) : (
-              <p className="mt-2 text-[11px] text-slate-400">ยังไม่มีข้อมูลในส่วนนี้</p>
+              <p className="mt-2 text-xs text-slate-500">ยังไม่มีข้อมูลในส่วนนี้</p>
             )}
           </section>
         );
@@ -104,16 +104,16 @@ export function TicketFormSummary({
               href={`#ticket-section-${def.sections.length + 1}`}
               onClick={() => focusHashTarget(`ticket-section-${def.sections.length + 1}`)}
               aria-label="แก้ไขผู้ตรวจสอบ / อนุมัติ"
-              className="rounded-sm text-[11px] font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
+              className="rounded-sm text-xs font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
             >
               แก้ไข
             </a>
           </div>
           <dl className="mt-2.5 space-y-2">
             {def.approvals.map((step) => (
-              <div key={step.fieldKey} className="grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1.2fr)] gap-2 text-[11px] leading-4">
-                <dt className="truncate text-slate-400">{step.label}</dt>
-                <dd className={cn("min-w-0 break-words font-medium", hasValue(values[step.fieldKey]) ? "text-slate-700" : "text-slate-400")}>
+              <div key={step.fieldKey} className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-3 text-xs leading-5">
+                <dt className="break-words text-slate-500">{step.label}</dt>
+                <dd className={cn("min-w-0 break-words font-medium", hasValue(values[step.fieldKey]) ? "text-slate-700" : "text-slate-500")}>
                   {approverName(values[step.fieldKey], approvers)}
                 </dd>
               </div>
@@ -129,12 +129,12 @@ export function TicketFormSummary({
             href={`#ticket-section-${def.sections.length + (showApprovals ? 2 : 1)}`}
             onClick={() => focusHashTarget(`ticket-section-${def.sections.length + (showApprovals ? 2 : 1)}`)}
             aria-label="แก้ไขข้อมูลเพิ่มเติม"
-            className="rounded-sm text-[11px] font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
+            className="rounded-sm text-xs font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
           >
             แก้ไข
           </a>
         </div>
-        <p className={cn("mt-2 line-clamp-3 whitespace-pre-wrap text-[11px] leading-4", note.trim() ? "text-slate-600" : "text-slate-400")}>
+        <p className={cn("mt-2 line-clamp-3 whitespace-pre-wrap break-words text-xs leading-5", note.trim() ? "text-slate-600" : "text-slate-500")}>
           {note.trim() || "ยังไม่มีรายละเอียดเพิ่มเติม"}
         </p>
       </section>
@@ -147,20 +147,20 @@ export function TicketFormSummary({
               href={`#ticket-section-${def.sections.length + (showApprovals ? 2 : 1)}`}
               onClick={() => focusHashTarget(`ticket-section-${def.sections.length + (showApprovals ? 2 : 1)}`)}
               aria-label="แก้ไขไฟล์แนบ"
-              className="rounded-sm text-[11px] font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
+              className="rounded-sm text-xs font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
             >
               แก้ไข
             </a>
           </div>
           {files.length > 0 ? (
-            <ul className="mt-2 space-y-1.5 text-[11px] text-slate-600">
+            <ul className="mt-2 space-y-1.5 text-xs leading-5 text-slate-600">
               {files.slice(0, 3).map((file, index) => (
-                <li key={`${file.name}-${index}`} className="truncate" title={file.name}>{file.name}</li>
+                <li key={`${file.name}-${index}`} className="break-all">{file.name}</li>
               ))}
-              {files.length > 3 && <li className="text-slate-400">และอีก {files.length - 3} ไฟล์</li>}
+              {files.length > 3 && <li className="text-slate-500">และอีก {files.length - 3} ไฟล์</li>}
             </ul>
           ) : (
-            <p className="mt-2 text-[11px] text-slate-400">ยังไม่ได้แนบไฟล์</p>
+            <p className="mt-2 text-xs text-slate-500">ยังไม่ได้แนบไฟล์</p>
           )}
         </section>
       )}
@@ -185,7 +185,7 @@ export function TicketFormSummary({
     <section aria-labelledby={compact ? "ticket-summary-heading-compact" : "ticket-summary-heading"} className="overflow-hidden rounded-md border border-border bg-card">
       <header className="border-b border-border bg-surface-subtle/70 px-4 py-3.5">
         <h2 id={compact ? "ticket-summary-heading-compact" : "ticket-summary-heading"} className="text-sm font-semibold text-slate-950">สรุปข้อมูลคำร้อง</h2>
-        <div className="mt-1 flex items-center justify-between gap-3 text-[11px]">
+        <div className="mt-1 flex items-center justify-between gap-3 text-xs">
           <span className="text-muted">ข้อมูลจำเป็น</span>
           <span aria-live="polite" className={cn("font-semibold tabular-nums", requiredComplete === requiredTotal ? "text-emerald-700" : "text-brand")}>
             {requiredComplete}/{requiredTotal} ช่อง
@@ -206,7 +206,7 @@ export function TicketFormSummary({
           />
         </div>
         {issueCount > 0 && (
-          <p className="mt-2 text-[11px] font-medium text-red-700">มีข้อมูลที่ต้องแก้ไข {issueCount} รายการ</p>
+          <p className="mt-2 text-xs font-medium text-red-700">มีข้อมูลที่ต้องแก้ไข {issueCount} รายการ</p>
         )}
       </header>
       {content}

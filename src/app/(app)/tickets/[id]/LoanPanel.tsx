@@ -56,6 +56,8 @@ export function LoanPanel({
   const currentAvailabilityKey = `${category}|${from}|${to}`;
   const availabilityReady = availabilityKey === currentAvailabilityKey;
   const currentAvailabilityError = availabilityReady && availabilityError;
+  const selectionReady = canLend && availabilityReady && !availabilityError &&
+    Boolean(available?.some((item) => String(item.id) === selectedId));
 
   useEffect(() => {
     if (!canLend) return;
@@ -69,6 +71,7 @@ export function LoanPanel({
       .then((data) => {
         if (!cancelled) {
           setAvailable(Array.isArray(data.items) ? data.items : []);
+          setSelectedId("");
           setAvailabilityError(false);
           setAvailabilityKey(currentAvailabilityKey);
         }
@@ -86,7 +89,7 @@ export function LoanPanel({
   }, [canLend, category, from, to, currentAvailabilityKey, availabilityAttempt]);
 
   async function lend() {
-    if (!selectedId || busyAction !== null) return;
+    if (!selectionReady || busyAction !== null) return;
     setBusyAction("lend");
     setErr(null);
     try {
@@ -121,6 +124,7 @@ export function LoanPanel({
       const response = await fetch(`/api/loans/${loanId}/return`, { method: "POST" });
       if (response.ok) {
         success("บันทึกรับคืนอุปกรณ์แล้ว");
+        setPendingReturn(null);
         router.refresh();
       } else {
         const message = "บันทึกการคืนไม่สำเร็จ";
@@ -203,14 +207,14 @@ export function LoanPanel({
           <label htmlFor="loan-item" className="text-xs font-medium text-slate-600">
             อุปกรณ์ที่จะให้ยืม
           </label>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
+          <div className="mt-1 flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
             <select
               id="loan-item"
               value={selectedId}
               onChange={(event) => setSelectedId(event.target.value)}
               disabled={busyAction !== null || !availabilityReady || !available || available.length === 0}
               aria-describedby="loan-item-help"
-              className="control min-w-[240px] flex-1 px-3 text-sm disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-muted"
+              className="control w-full min-w-0 flex-1 px-3 text-sm disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-muted"
             >
               <option value="">
                 {!availabilityReady || available === null
@@ -225,7 +229,7 @@ export function LoanPanel({
                 </option>
               ))}
             </select>
-            <Button type="button" disabled={!selectedId || busyAction !== null} loading={busyAction === "lend"} onClick={lend}>
+            <Button type="button" className="shrink-0" disabled={!selectionReady || busyAction !== null} loading={busyAction === "lend"} onClick={lend}>
               {busyAction === "lend" ? "กำลังบันทึก..." : "บันทึกให้ยืม"}
             </Button>
           </div>

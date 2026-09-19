@@ -273,6 +273,8 @@ async function tickets(demoUsers: { id: number; displayName: string; email: stri
         ticketId: m.t.id,
         raterId: reg[0]?.id ?? null,
         score: rnd([5, 5, 4, 4, 3]),
+        scoreQuality: rnd([5, 5, 4, 4, 3]),
+        scoreSpeed: rnd([5, 4, 4, 3, 3]),
         comment: rnd(["เจ้าหน้าที่บริการดีมาก รวดเร็ว", "แก้ปัญหาได้เรียบร้อย", "รอนานไปนิด แต่โอเค", ""]),
         createdAt: ago(2),
       },

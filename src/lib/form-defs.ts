@@ -195,6 +195,7 @@ const F10: FormDef = {
           type: "select",
           required: true,
           colSpan: 1,
+          help: "เลือก “ขอใช้งานระบบ” เมื่อต้องการเพิ่มหรือเปลี่ยนสิทธิ์ และเลือก “ยกเลิกใช้งานระบบ” เมื่อต้องการถอนสิทธิ์เดิม",
           options: [
             { value: "request", label: "ขอใช้งานระบบ" },
             { value: "cancel", label: "ยกเลิกใช้งานระบบ" },
@@ -207,10 +208,12 @@ const F10: FormDef = {
           type: "checkboxes",
           required: true,
           colSpan: 2,
+          help: "เลือกได้มากกว่า 1 รายการ หากเลือกระบบที่ต้องระบุชื่อ ให้กรอกชื่อระบบในช่องถัดไป",
           options: [
             { value: "internal_user", label: "ชื่อผู้ใช้งานระบบภายใน" },
             { value: "user_softpro", label: "User Softpro" },
             { value: "rdp", label: "Remote Desktop User (ระบุชื่อระบบ)" },
+            { value: "vpn", label: "VPN" },
             { value: "email", label: "Email" },
             { value: "share_drive", label: "สิทธิ์การใช้งานไดรฟ์แชร์" },
             { value: "printer", label: "สิทธิ์ใช้งานเครื่องปริ้น" },
@@ -224,9 +227,18 @@ const F10: FormDef = {
           type: "text",
           colSpan: 2,
           maxLength: 200,
+          placeholder: "เช่น VPN เพื่อเข้าระบบ ERP จากภายนอก หรือไดรฟ์แชร์ \\server\\finance",
           help: "จำเป็นเมื่อเลือกรายการที่ต้องระบุชื่อระบบหรือรายละเอียดเพิ่มเติม",
         },
-        { key: "detail", label: "ระบุรายละเอียดการขอใช้งาน/ยกเลิก ระบบเทคโนโลยีสารสนเทศ", type: "textarea", required: true, colSpan: 2 },
+        {
+          key: "detail",
+          label: "ระบุรายละเอียดการขอใช้งาน/ยกเลิก ระบบเทคโนโลยีสารสนเทศ",
+          type: "textarea",
+          required: true,
+          colSpan: 2,
+          placeholder: "ระบุวัตถุประสงค์ สิทธิ์ที่ต้องการ และชื่อผู้ใช้ต้นแบบ (ถ้ามี)",
+          help: "ตัวอย่าง: ขอสิทธิ์เหมือนคุณสมชาย แผนกบัญชี เพื่อจัดทำรายงานประจำเดือน",
+        },
         { key: "obstacles", label: "ปัญหาอุปสรรค (ถ้ามี)", type: "textarea", colSpan: 2 },
       ],
     },
@@ -495,6 +507,10 @@ function userLevelField(n: 1 | 2 | 3 | 4 | 5): FieldDef {
     required: n === 1,
     colSpan: 1,
     options: USER_LEVEL_OPTIONS,
+    help:
+      n === 1
+        ? "ผู้ใช้ข้อมูล: ดู/พิมพ์ · ผู้ปฏิบัติงาน: เพิ่ม/แก้ไขข้อมูล · ผู้อนุมัติ: อนุมัติหรือปฏิเสธรายการ"
+        : undefined,
   };
 }
 
@@ -531,13 +547,22 @@ const F13: FormDef = {
           label: "ลำดับ Y ในการอนุมัติ (PR)",
           type: "select",
           colSpan: 1,
+          help: "กรอกเฉพาะกรณีต้องอนุมัติ PR โดย Y1 คือผู้อนุมัติลำดับแรก",
           options: [
             { value: "Y1", label: "Y1" },
             { value: "Y2", label: "Y2" },
             { value: "Y3", label: "Y3" },
           ],
         },
-        { key: "prApprovalLimit", label: "วงเงินอนุมัติ (PR)", type: "text", maxLength: 14, colSpan: 1, placeholder: "พิมพ์จำนวนเงิน" },
+        {
+          key: "prApprovalLimit",
+          label: "วงเงินอนุมัติ (PR)",
+          type: "text",
+          maxLength: 14,
+          colSpan: 1,
+          placeholder: "เช่น 50,000 บาท",
+          help: "กรอกวงเงินสูงสุดที่อนุมัติได้ หากไม่ได้ขอสิทธิ์อนุมัติ PR ให้เว้นว่าง",
+        },
         // same field key/options as serviceSiteField (SITES gets injected by
         // key alone) but labeled to match the real paper form's "สังกัด
         // (ชื่อย่อ)" column instead of the generic app-wide wording — a

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { siteName, isIT } from "@/lib/constants";
 import { AppNav } from "./AppNav";
@@ -45,11 +46,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         ข้ามไปเนื้อหาหลัก
       </a>
       <NavProgress />
-      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[248px] overflow-y-auto border-r border-white/10 bg-sidebar text-white lg:flex lg:flex-col">
+      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[248px] overflow-x-clip overflow-y-auto border-r border-white/10 bg-sidebar text-white lg:flex lg:flex-col">
         <Link href="/" className="flex flex-col gap-1 border-b border-white/10 px-5 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40">
           <span className="flex items-center gap-3">
             <Image
               src="/TSM.png"
+              loading="eager"
               alt=""
               width={40}
               height={40}
@@ -70,26 +72,39 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <ServiceNav />
         </div>
 
-        <div className="mt-auto flex items-center gap-3 border-t border-white/10 px-5 py-4">
-          <span
-            aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white"
-          >
-            {initials(user.displayName)}
-          </span>
-          <div className="min-w-0 leading-tight">
-            <p className="truncate text-sm font-semibold text-white">{user.displayName}</p>
-            <p className="truncate text-xs text-white/45">{siteName(user.siteCode ?? "")} · IT Service Desk</p>
+        <div className="mt-auto border-t border-white/10 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden="true"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white"
+            >
+              {initials(user.displayName)}
+            </span>
+            <div className="min-w-0 flex-1 leading-tight">
+              <p className="truncate text-sm font-semibold text-white" title={user.displayName}>{user.displayName}</p>
+              <p className="truncate text-xs text-white/45">{siteName(user.siteCode ?? "")} · IT Service Desk</p>
+            </div>
+            <form action="/api/auth/logout" method="post" className="shrink-0">
+              <button
+                type="submit"
+                title="ออกจากระบบ"
+                aria-label="ออกจากระบบ"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              >
+                <LogOut size={17} aria-hidden="true" />
+              </button>
+            </form>
           </div>
         </div>
       </aside>
 
       <div className="min-w-0 lg:ml-[248px]">
-        <header className="no-print sticky top-0 z-30 border-b border-border bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+        <header className="no-print sticky top-0 z-30 border-b border-border bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75 lg:hidden">
           <div className="flex h-16 w-full items-center gap-4 px-4 sm:px-6 xl:px-8">
             <Link href="/" className="flex items-center gap-2 rounded-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2 lg:hidden">
               <Image
                 src="/TSM.png"
+                loading="eager"
                 alt=""
                 width={36}
                 height={36}

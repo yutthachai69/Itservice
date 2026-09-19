@@ -10,6 +10,7 @@ import { StatusBadge, Pill } from "@/components/Badge";
 import { PageHeader } from "@/components/PageHeader";
 import { fmtDateTime, cn } from "@/lib/ui";
 import { computeSla } from "@/lib/sla";
+import { ticketDateFilter } from "@/lib/ticket-date-filter";
 import { Button, ButtonLink } from "@/components/Button";
 
 const PAGE_SIZE = 20;
@@ -44,12 +45,17 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
   const overdueOnly = one(sp.sla) === "overdue";
   const mine = one(sp.mine) === "1" || !it;
   const assigneeMe = it && one(sp.assignee) === "me";
-  const page = Math.max(1, Number(one(sp.page)) || 1);
+  const rawPage = Number(one(sp.page));
+  const page = Number.isSafeInteger(rawPage) && rawPage > 0 && rawPage <= 1000000 ? rawPage : 1;
+  const createdFrom = ticketDateFilter(one(sp.createdFrom));
+  const closedFrom = ticketDateFilter(one(sp.closedFrom));
   const now = new Date();
 
   const hasFilters =
-    !!formType || status !== "active" || !!site || !!q || overdueOnly || (it && mine) || assigneeMe;
+    !!formType || status !== "active" || !!site || !!q || overdueOnly || (it && mine) || assigneeMe || !!createdFrom || !!closedFrom;
   const activeFilterCount = [
+    createdFrom,
+    closedFrom,
     formType,
     status !== "active" ? status : "",
     site,
@@ -59,6 +65,8 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
     assigneeMe ? "assignee" : "",
   ].filter(Boolean).length;
   const activeFilterLabels = [
+    createdFrom ? `สร้างตั้งแต่: ${fmtDateTime(createdFrom)}` : "",
+    closedFrom ? `ปิดตั้งแต่: ${fmtDateTime(closedFrom)}` : "",
     status !== "active" ? `สถานะ: ${STATUS_FILTER_LABEL[status] ?? status}` : "",
     formType ? `แบบฟอร์ม: ${formType}` : "",
     site ? `บริษัท: ${siteName(site)}` : "",
@@ -69,6 +77,8 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
   ].filter(Boolean);
 
   const baseWhere: Prisma.TicketWhereInput = {};
+  if (createdFrom) baseWhere.createdAt = { gte: new Date(createdFrom) };
+  if (closedFrom) baseWhere.closedAt = { gte: new Date(closedFrom) };
   if (mine) baseWhere.requesterId = user.id;
   if (assigneeMe) baseWhere.assignedToId = user.id;
   if (formType) baseWhere.formType = formType;
@@ -119,6 +129,8 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries({
+    createdFrom,
+    closedFrom,
     formType,
     status,
     site,
@@ -239,6 +251,8 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
             <span className="hidden text-xs font-normal text-muted group-open:inline">ซ่อนตัวกรอง</span>
           </summary>
         <form id="ticket-filters-panel" method="get" aria-label="ตัวกรองรายการคำร้อง" className="p-4">
+        {createdFrom && <input type="hidden" name="createdFrom" value={createdFrom} />}
+        {closedFrom && <input type="hidden" name="closedFrom" value={closedFrom} />}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1.45fr_1fr_1.35fr_auto]">
           <label className="flex flex-col gap-1 text-xs text-muted">
             <span className="font-medium text-slate-600">ประเภทฟอร์ม</span>

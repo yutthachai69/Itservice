@@ -36,12 +36,14 @@ export function AssetForm({
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
 
-  useEffect(() => {
-    const firstInvalid = document.querySelector<HTMLElement>('[aria-invalid="true"]');
-    if (!firstInvalid) return;
-    firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
-    firstInvalid.focus({ preventScroll: true });
-  }, [errors]);
+  function focusFirstError() {
+    requestAnimationFrame(() => {
+      const firstInvalid = document.querySelector<HTMLElement>('[aria-invalid="true"]');
+      if (!firstInvalid) return;
+      firstInvalid.scrollIntoView({ behavior: "auto", block: "center" });
+      firstInvalid.focus({ preventScroll: true });
+    });
+  }
 
   const set = (k: string, v: string) => {
     setValues((p) => ({ ...p, [k]: v }));
@@ -90,6 +92,7 @@ export function AssetForm({
     if (Object.keys(clientErrors).length > 0) {
       setBusy(false);
       setErrors(clientErrors);
+      focusFirstError();
       setFormError("กรอกข้อมูลไม่ครบ กรุณาตรวจสอบช่องที่มีข้อความแจ้งเตือน");
       return;
     }
@@ -109,14 +112,20 @@ export function AssetForm({
     if (res.ok) {
       const body = await res.json().catch(() => ({}));
       const id = mode === "edit" ? assetId : body.id;
+      if (!Number.isSafeInteger(id) || id <= 0) {
+        router.push("/assets");
+        router.refresh();
+        return;
+      }
       router.push(`/assets/${id}`);
       router.refresh();
       return;
     }
     setBusy(false);
     if (res.status === 422) {
-      const b = await res.json();
+      const b = await res.json().catch(() => ({}));
       setErrors(b.fields ?? {});
+      focusFirstError();
       setFormError("กรอกข้อมูลไม่ครบหรือไม่ถูกต้อง");
     } else if (res.status === 403) {
       setFormError("เฉพาะเจ้าหน้าที่ IT เท่านั้น");
@@ -214,7 +223,7 @@ export function AssetForm({
 
 function cls(err?: string) {
   return cn(
-    "mt-1 min-h-10 w-full rounded-md border bg-card px-3 py-2 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-muted",
+    "mt-1 min-h-10 w-full min-w-0 rounded-md border bg-surface-subtle px-3 py-2 text-sm outline-none transition focus:border-brand focus:bg-card focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-muted",
     err ? "border-red-400" : "border-border",
   );
 }
@@ -277,7 +286,7 @@ function AField({
           {...common}
         />
       )}
-      {f.help && <span id={helpId} className="mt-1 block text-xs text-slate-400">{f.help}</span>}
+      {f.help && <span id={helpId} className="mt-1 block text-xs text-slate-500">{f.help}</span>}
       {error && <span id={errorId} className="mt-1 block text-xs text-red-600">{error}</span>}
     </label>
   );

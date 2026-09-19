@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { FORM_LIST } from "@/lib/form-defs";
+import { isIT } from "@/lib/constants";
 import { listFormFiles, formPdfFile } from "@/lib/form-files";
 import { docThumb } from "@/lib/doc-thumbs";
 import { titleFor, DESC, SERVICE_ICON, REGENERATED, docUrls } from "@/lib/doc-meta";
@@ -10,11 +11,10 @@ import { Pill } from "@/components/Badge";
 import { Button, ButtonLink } from "@/components/Button";
 import { fmtDate, cn } from "@/lib/ui";
 import {
-  CircleCheck,
   Download,
   Eye,
   FileText,
-  MoreHorizontal,
+  Search,
 } from "lucide-react";
 
 // real names/descriptions not confirmed yet — flagged in the UI instead of
@@ -57,15 +57,15 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   const q = (sp.q ?? "").trim();
   const filter: FilterKey = FILTERS.some((f) => f.key === sp.filter) ? (sp.filter as FilterKey) : "all";
   const files = listFormFiles();
-  const appCodes = new Set(FORM_LIST.map((f) => f.type));
+  const availableForms = FORM_LIST.filter((form) => !form.initiatedByIT || isIT(user.role));
   const matchesQuery = (haystack: string) => !q || haystack.toLocaleLowerCase().includes(q.toLocaleLowerCase());
 
   // "create online" cards are driven by FORM_LIST (every service the app
   // offers), independent of whether IT has also uploaded a paper PDF for it —
   // the download table below is driven by files actually in public/forms/.
-  const searchedForms = FORM_LIST.filter((f) => matchesQuery([f.type, f.shortTitle, DESC[f.type] ?? ""].join(" ")));
+  const searchedForms = availableForms.filter((f) => matchesQuery([f.type, f.shortTitle, DESC[f.type] ?? ""].join(" ")));
   const searchedOtherFiles = files.filter(
-    (f) => !appCodes.has(f.code) && matchesQuery([f.code, titleFor(f.code), DESC[f.code] ?? ""].join(" ")),
+    (f) => matchesQuery([f.code, titleFor(f.code), DESC[f.code] ?? ""].join(" ")),
   );
 
   const filterCounts: Record<FilterKey, number> = {
@@ -96,37 +96,26 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-8">
-      {/* ── hero ── */}
-      <section className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      {/* page heading */}
+      <section className="flex flex-col gap-5 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
+          <p className="mb-2 text-xs font-medium text-brand">บริการ IT</p>
           <h1 className="text-xl font-semibold leading-tight tracking-[-0.015em] text-slate-950 sm:text-[1.375rem]">
             แบบฟอร์มเอกสาร
           </h1>
           <p className="mt-1 text-sm text-muted">
-            ดาวน์โหลดเอกสาร (PDF) หรือสร้างคำร้องผ่านระบบออนไลน์ — ทุกอย่างที่ต้องใช้สำหรับงานบริการ IT
+            ดาวน์โหลดเอกสาร PDF หรือสร้างคำร้องผ่านระบบออนไลน์
           </p>
         </div>
-        <div className="card flex flex-col gap-2 bg-brand-weak/40 p-4">
-          <p className="text-sm font-semibold text-slate-900">เอกสารและแบบฟอร์มครบ จบในที่เดียว</p>
-          <ul className="space-y-1 text-xs text-slate-600">
-            <li className="flex items-center gap-1.5">
-              <CircleCheck size={14} className="shrink-0 text-brand" aria-hidden="true" />
-              สร้างคำร้องออนไลน์ได้ทันที
-            </li>
-            <li className="flex items-center gap-1.5">
-              <CircleCheck size={14} className="shrink-0 text-brand" aria-hidden="true" />
-              ดาวน์โหลดเอกสารที่เกี่ยวข้อง
-            </li>
-            <li className="flex items-center gap-1.5">
-              <CircleCheck size={14} className="shrink-0 text-brand" aria-hidden="true" />
-              อัปเดตข้อมูลใหม่เสมอ
-            </li>
-          </ul>
+        <div className="flex shrink-0 items-center gap-5 text-xs text-muted sm:pb-1">
+          <span><strong className="mr-1 text-base font-semibold text-slate-950">{availableForms.length}</strong> แบบฟอร์มออนไลน์</span>
+          <span className="h-5 w-px bg-border" aria-hidden="true" />
+          <span><strong className="mr-1 text-base font-semibold text-slate-950">{files.length}</strong> เอกสาร PDF</span>
         </div>
       </section>
 
       {/* ── search + filters ── */}
-      <form method="get" className="card flex flex-col gap-3 p-4 text-sm shadow-sm sm:flex-row sm:items-end">
+      <form method="get" role="search" className="card flex flex-col gap-3 p-4 text-sm shadow-sm sm:flex-row sm:items-end">
         <label htmlFor="document-search" className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-600">
           ค้นหาเอกสาร
           <input
@@ -138,13 +127,13 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
           />
         </label>
         {filter !== "all" && <input type="hidden" name="filter" value={filter} />}
-        <Button type="submit" className="w-full sm:w-auto">ค้นหา</Button>
+        <Button type="submit" className="w-full gap-2 sm:w-auto"><Search size={15} aria-hidden="true" />ค้นหา</Button>
         {(q || filter !== "all") && (
           <ButtonLink href="/documents" variant="secondary" size="md" className="w-full sm:w-auto">ล้างตัวกรอง</ButtonLink>
         )}
       </form>
 
-      {(FORM_LIST.length > 0 || files.length > 0) && (
+      {(availableForms.length > 0 || files.length > 0) && (
         <div className="flex flex-wrap items-center gap-2">
           {FILTERS.map((f) => {
             const active = filter === f.key;
@@ -183,53 +172,39 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
                   <h2 className="text-sm font-bold text-slate-900">แบบฟอร์มสร้างคำร้องออนไลน์</h2>
                   <p className="text-xs text-muted">เลือกบริการที่ต้องการ เพื่อสร้างคำร้องผ่านระบบ</p>
                 </div>
+                <span className="shrink-0 text-xs text-muted">{cardForms.length} รายการ</span>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {cardForms.map((form, i) => {
+                {cardForms.map((form) => {
                   const Icon = SERVICE_ICON[form.type] ?? FileText;
-                  const tone = CARD_TONES[i % CARD_TONES.length];
+                  const tone = CARD_TONES[FORM_LIST.findIndex((item) => item.type === form.type) % CARD_TONES.length];
                   const pdf = formPdfFile(form.type);
                   const urls = pdf ? docUrls(form.type) : null;
                   return (
-                    <div key={form.type} className="card relative flex flex-col gap-3 p-4">
-                      {/* the paper-form PDF's own view/download — the card
-                          itself (icon + title, below) is still the way to
-                          reach /tickets/new/[code] */}
-                      {urls && (
-                        <div className="absolute top-3 right-3 z-10 flex gap-1">
-                          <a
-                            href={urls.view}
-                            target="_blank"
-                            rel="noreferrer"
-                            aria-label={`ดูตัวอย่าง ${form.shortTitle} (เปิดแท็บใหม่)`}
-                            title="ดูตัวอย่าง"
-                            className="flex h-8 w-8 items-center justify-center rounded-md border border-border-strong text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
-                          >
-                            <Eye size={14} aria-hidden="true" />
-                          </a>
-                          <a
-                            href={urls.download}
-                            download
-                            aria-label={`ดาวน์โหลด ${form.shortTitle}`}
-                            title="ดาวน์โหลด"
-                            className="flex h-8 w-8 items-center justify-center rounded-md border border-border-strong text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1"
-                          >
-                            <Download size={14} aria-hidden="true" />
-                          </a>
-                        </div>
-                      )}
-                      <Link href={`/tickets/new/${form.type}`} className="group/link flex min-w-0 flex-1 flex-col gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
-                        <span className={cn("flex h-11 w-11 items-center justify-center rounded-lg ring-1", tone.bg, tone.text, tone.ring)}>
-                          <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-bold text-slate-900 group-hover/link:text-brand">{form.shortTitle}</span>
-                          <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-muted">{DESC[form.type] ?? form.title}</span>
-                          <span className="mt-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500">
-                            {form.type}
-                          </span>
-                        </span>
+                    <div key={form.type} className="card group flex min-h-[156px] flex-col gap-3 p-4 transition-colors hover:border-brand/40 hover:bg-brand-weak/20">
+                      <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ring-1", tone.bg, tone.text, tone.ring)}>
+                        <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
+                      </span>
+                      <Link href={`/tickets/new/${form.type}`} className="min-w-0 flex-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
+                        <span className="block break-words text-sm font-semibold text-slate-900 group-hover:text-brand">{form.shortTitle}</span>
+                        <span className="mt-0.5 block line-clamp-2 text-xs leading-relaxed text-muted">{DESC[form.type] ?? form.title}</span>
+                        <span className="mt-1 inline-flex rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-500">{form.type}</span>
                       </Link>
+                      <div className="flex items-center justify-between gap-2">
+                        <ButtonLink href={`/tickets/new/${form.type}`} variant="secondary" size="sm" className="text-brand" aria-label={`สร้างคำร้อง ${form.shortTitle}`}>
+                          สร้างคำร้อง
+                        </ButtonLink>
+                        {urls && (
+                          <div className="flex shrink-0 items-center gap-1">
+                            <a href={urls.view} target="_blank" rel="noreferrer" aria-label={`ดูตัวอย่าง ${form.shortTitle} (เปิดแท็บใหม่)`} title="ดูตัวอย่าง" className="flex h-9 w-9 items-center justify-center rounded-md border border-border-strong text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
+                              <Eye size={15} aria-hidden="true" />
+                            </a>
+                            <a href={urls.download} download aria-label={`ดาวน์โหลด ${form.shortTitle}`} title="ดาวน์โหลด" className="flex h-9 w-9 items-center justify-center rounded-md border border-border-strong text-muted transition hover:border-brand/40 hover:bg-brand-weak hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-1">
+                              <Download size={15} aria-hidden="true" />
+                            </a>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -239,9 +214,12 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
 
           {showTable && (
             <section>
-              <div className="mb-3">
-                <h2 className="text-sm font-bold text-slate-900">เอกสารดาวน์โหลด</h2>
-                <p className="text-xs text-muted">เอกสารแบบฟอร์ม (PDF) สำหรับกรอกด้วยมือหรือเอกสารอ้างอิงอื่นๆ</p>
+              <div className="mb-3 flex items-baseline justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">เอกสารดาวน์โหลด</h2>
+                  <p className="text-xs text-muted">เอกสารแบบฟอร์ม (PDF) สำหรับกรอกด้วยมือหรือเอกสารอ้างอิงอื่นๆ</p>
+                </div>
+                <span className="shrink-0 text-xs text-muted">{others.length} รายการ</span>
               </div>
               <div className="card overflow-x-auto">
                 <table className="w-full min-w-[640px] text-left text-sm">
@@ -313,13 +291,6 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
                               >
                                 <Download size={14} aria-hidden="true" />
                               </a>
-                              <span
-                                aria-hidden="true"
-                                className="flex h-8 w-8 items-center justify-center rounded-md text-slate-300"
-                                title="เพิ่มเติม (เร็วๆ นี้)"
-                              >
-                                <MoreHorizontal size={16} />
-                              </span>
                             </div>
                           </td>
                         </tr>

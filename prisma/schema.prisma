@@ -163,7 +163,13 @@ model Evaluation {
   ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   raterId   Int?
   rater     User?    @relation(fields: [raterId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  score     Int // 1..5
+  // three dimensions mirroring the legacy form: satisfaction / work quality /
+  // speed, each 1..5. `score` stays the satisfaction axis (unchanged for old
+  // rows); quality/speed are nullable so pre-existing single-score evaluations
+  // still read back cleanly.
+  score        Int // ความพึงพอใจในการให้บริการ 1..5
+  scoreQuality Int? // ความเรียบร้อยของงาน 1..5
+  scoreSpeed   Int? // ความรวดเร็วการให้บริการ 1..5
   comment   String?  @db.NVarChar(Max)
   createdAt DateTime @default(now())
 }

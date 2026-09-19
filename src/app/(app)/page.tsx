@@ -13,7 +13,7 @@ import { FORM_LIST } from "@/lib/form-defs";
 import { SERVICE_ICON } from "@/lib/doc-meta";
 import { isIT } from "@/lib/constants";
 import { computeSla } from "@/lib/sla";
-import { Pill, StatusBadge } from "@/components/Badge";
+import { StatusBadge } from "@/components/Badge";
 import { Card, CardHeader } from "@/components/Card";
 import Image from "next/image";
 import { fmtDateTime, cn } from "@/lib/ui";
@@ -252,15 +252,15 @@ export default async function HomePage() {
               ) : undefined
             }
           />
-          <div className="grid lg:grid-cols-2 lg:divide-x lg:divide-border">
-            <div className="p-5">
+          <div className="grid min-w-0 grid-cols-1 lg:grid-cols-2 lg:divide-x lg:divide-border">
+            <div className="min-w-0 p-5">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-700">งานที่มอบหมายให้ฉัน</h3>
                 <Link href="/tickets?assignee=me" className="rounded-sm text-xs font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2">ดูทั้งหมด</Link>
               </div>
               <TicketMiniList tickets={myQueue} empty="ไม่มีงานที่มอบหมายให้คุณ" flush />
             </div>
-            <div className="border-t border-border p-5 lg:border-t-0">
+            <div className="min-w-0 border-t border-border p-5 lg:border-t-0">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-700">คำร้องใหม่ที่ยังไม่มีผู้รับ</h3>
                 <Link href="/tickets?status=open" className="rounded-sm text-xs font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2">ดูทั้งหมด</Link>
@@ -351,13 +351,13 @@ function TicketMiniList({
           <Link
             href={`/tickets/${ticket.id}`}
             aria-label={`เปิดคำร้อง ${ticket.docNo}: ${ticket.userStatus}`}
-            className={cn("flex items-center gap-3 rounded-sm py-3 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/35", flush ? "px-1" : "px-5")}
+            className={cn("flex min-w-0 flex-wrap items-center gap-3 rounded-sm py-3 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/35", flush ? "px-1" : "px-5")}
           >
             <span className="font-mono text-xs text-slate-400">{ticket.docNo}</span>
             <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-muted">{ticket.formType}</span>
             <span className="min-w-0 flex-1 line-clamp-2 break-words text-sm leading-5 text-slate-700" title={ticket.userStatus}>{ticket.userStatus}</span>
             <span className="hidden text-xs text-slate-400 xl:inline">{fmtDateTime(ticket.createdAt)}</span>
-            {sla.overdue && <Pill tone="red">{sla.text}</Pill>}
+            {sla.overdue && <span className="order-last w-full text-xs font-medium leading-5 text-red-700">{sla.text}</span>}
             <StatusBadge status={ticket.status} />
           </Link>
         </li>

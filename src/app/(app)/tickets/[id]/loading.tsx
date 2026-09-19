@@ -15,11 +15,11 @@ export default function Loading() {
         </div>
       </div>
 
-      <div className="grid overflow-hidden rounded-md bg-sidebar sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="space-y-2 border-white/10 px-5 py-4 sm:border-l first:border-l-0">
-            <Skeleton className="h-3 w-20 bg-white/15" />
-            <Skeleton className="h-4 w-28 bg-white/20" />
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className="min-w-0 space-y-2 rounded-md border border-border bg-card px-4 py-3">
+            <Skeleton className="h-3 w-20 max-w-full" />
+            <Skeleton className="h-4 w-28 max-w-full" />
           </div>
         ))}
       </div>
